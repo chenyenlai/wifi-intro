@@ -69,6 +69,7 @@ select{font:inherit;font-size:14px;padding:5px 8px;border:1px solid var(--line);
 .slab{display:flex;gap:3px;height:46px}
 .slab div{flex:1;min-width:0;background:var(--b6);color:var(--panel);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;animation:pop .35s ease}
 @keyframes pop{from{transform:scaleY(.6);opacity:.4}to{transform:none;opacity:1}}
+.bar{display:flex;gap:2px;height:28px;border-radius:6px;overflow:hidden}
 .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .facts div{border-left:3px solid var(--line);padding-left:10px;font-size:13px;color:var(--muted)}
 .facts b{display:block;font-family:var(--mono);font-size:20px;color:var(--fg);font-variant-numeric:tabular-nums}
@@ -77,7 +78,7 @@ select{font:inherit;font-size:14px;padding:5px 8px;border:1px solid var(--line);
 @media (max-width:640px){.mcs{grid-template-columns:1fr}}
 #cvQam{height:auto;aspect-ratio:1;max-width:100%}
 .ctls{display:flex;flex-direction:column;gap:12px;min-width:0}
-.ctls>label.ctl{flex:none}
+.ctls>label.ctl,.panel>label.ctl{flex:none}
 .rate{font-family:var(--display);font-size:38px;line-height:1.1;font-variant-numeric:tabular-nums}
 .rate span{font-size:16px;color:var(--muted);font-family:var(--body)}
 .ok{color:var(--b5)} .no{color:var(--bad)}
@@ -95,9 +96,9 @@ footer{font-size:13px;color:var(--muted)}
 <div class="wrap">
 <header>
   <h1>Wi-Fi 技術入門</h1>
-  <p>Wi-Fi 的速度由幾件事決定：用哪個頻段、頻道有多寬、頻道怎麼切成子載波、每個子載波塞幾個 bit，以及怎麼分給多台裝置。下面每個主題都有一個可以動手玩的動畫。</p>
+  <p>Wi-Fi 的速度由幾件事決定：用哪個頻段、頻道有多寬、訊號多乾淨、每個子載波塞幾個 bit、用幾根天線，以及頻道怎麼分給多台裝置。下面照這個順序介紹，每個主題都有一個可以動手玩的動畫。</p>
   <nav aria-label="章節">
-    <a href="#band">頻段</a><a href="#channel">頻道與頻寬</a><a href="#ofdm">OFDM</a><a href="#mcs">MCS</a><a href="#ofdma">OFDMA</a><a href="#gen">世代比較</a>
+    <a href="#band">頻段</a><a href="#channel">頻道與頻寬</a><a href="#signal">訊號與 SNR</a><a href="#ofdm">OFDM</a><a href="#gi">保護間隔</a><a href="#mcs">MCS</a><a href="#mimo">MIMO</a><a href="#bf">波束成形</a><a href="#csma">CSMA/CA</a><a href="#ofdma">OFDMA</a><a href="#mlo">MLO</a><a href="#real">實際網速</a><a href="#gen">世代比較</a>
   </nav>
 </header>
 
@@ -146,6 +147,23 @@ footer{font-size:13px;color:var(--muted)}
   </div>
 </section>
 
+<section id="signal">
+  <h2><small>RSSI &amp; SNR</small>訊號強度與 SNR</h2>
+  <p>訊號強度（RSSI）用 dBm 表示，是一個負數，越接近 0 越強。它是對數單位：每少 3 dB，功率剩一半；每少 10 dB，剩十分之一。大約 −50 dBm 算很強，−67 dBm 還能順暢看影片，−80 dBm 就在斷線邊緣。</p>
+  <p>真正決定速度的是 SNR（訊號雜訊比），也就是訊號比背景雜訊高出多少 dB。離路由器越遠、隔的牆越多，訊號越弱；頻道越寬，收進來的雜訊越多。SNR 越低，就只能用越低的 MCS。</p>
+  <div class="panel">
+    <canvas id="cvSig" style="height:160px" aria-label="訊號強度與雜訊的 dBm 刻度，兩者的差距就是 SNR"></canvas>
+    <div class="row">
+      <label class="ctl" for="sgD"><span>距離：<b id="sgDo"></b></span><input type="range" id="sgD" min="1" max="40" value="8"></label>
+      <label class="ctl" for="sgWl"><span>隔幾面牆：<b id="sgWo"></b></span><input type="range" id="sgWl" min="0" max="4" value="1"></label>
+      <label class="ctl" for="sgB" style="flex:0 1 110px">頻寬
+        <select id="sgB"><option>20</option><option>40</option><option selected>80</option><option>160</option></select></label>
+    </div>
+    <div class="cap" id="sgOut"></div>
+    <div class="cap">距離和牆造成的衰減是簡化的示意模型，實際數值依環境差很多。</div>
+  </div>
+</section>
+
 <section id="ofdm">
   <h2><small>Orthogonal frequency-division multiplexing</small>OFDM：把頻道切成很多子載波</h2>
   <p>Wi-Fi 不是用一個很寬的載波傳資料，而是把頻道切成很多窄的子載波，每個子載波各自傳一小部分資料，全部同時送出。</p>
@@ -164,6 +182,28 @@ footer{font-size:13px;color:var(--muted)}
       <li><span class="sw" style="background:transparent;border:1.5px solid var(--fg);border-radius:50%"></span>其他子載波在這個頻率的值：剛好是 0</li>
     </ul>
     <div class="cap">橫軸是頻率，上下兩排佔用的頻寬一樣。藍色粗線會輪流標出每一個子載波：看虛線的位置，只有藍色這條在高峰，其他每一條都剛好穿過 0。Wi-Fi 6 把子載波間距縮成四分之一，同樣的頻寬可以放四倍的子載波。</div>
+  </div>
+</section>
+
+<section id="gi">
+  <h2><small>Guard interval &amp; multipath</small>保護間隔與多路徑</h2>
+  <p>電波會被牆壁、地板反射，所以同一個符號會沿著不同的路徑、分好幾次到達接收端，這叫多路徑。反射的訊號比較晚到，如果拖到下一個符號的時間，前後兩個符號就會混在一起。</p>
+  <p>解法是在每個符號前面留一小段保護間隔（GI）。只要反射的延遲比保護間隔短，晚到的部分就落在這段緩衝裡，不會影響資料。保護間隔越長越安全，但這段時間不能傳資料，速度會稍微變慢。</p>
+  <div class="panel">
+    <div class="row">
+      <span class="cap">保護間隔</span>
+      <div class="seg" id="giSeg" role="group" aria-label="保護間隔">
+        <button data-g="0.8" aria-pressed="true">0.8 µs</button><button data-g="1.6" aria-pressed="false">1.6 µs</button><button data-g="3.2" aria-pressed="false">3.2 µs</button>
+      </div>
+    </div>
+    <canvas id="cvGi" style="height:210px" aria-label="三排時間軸：直接到達的訊號、晚到的反射訊號、接收端看到的結果"></canvas>
+    <label class="ctl" for="giD"><span>反射晚到：<b id="giDo"></b></span><input type="range" id="giD" min="0" max="4" step="0.1" value="0.5"></label>
+    <ul class="legend">
+      <li><span class="sw" style="background:var(--line)"></span>保護間隔</li>
+      <li><span class="sw" style="background:transparent;border:2px solid var(--b5)"></span>上一個符號的反射還在的時間</li>
+      <li><span class="sw" style="background:var(--bad)"></span>反射蓋到資料，造成干擾</li>
+    </ul>
+    <div class="cap" id="giOut"></div>
   </div>
 </section>
 
@@ -204,6 +244,57 @@ footer{font-size:13px;color:var(--muted)}
   </div>
 </section>
 
+<section id="mimo">
+  <h2><small>MIMO &amp; spatial streams</small>MIMO：多根天線同時傳多路資料</h2>
+  <p>路由器和裝置如果都有多根天線，就可以在同一個頻道、同一時間送出好幾路獨立的資料，每一路叫一個空間串流。因為每根天線到對方的路徑都不一樣，接收端可以用數學把混在一起的訊號分開。</p>
+  <p>串流數加倍，速度大約加倍。「2x2」表示 2 根發射、2 根接收，最多 2 個串流。串流數取決於兩邊比較少的那一方：大部分手機和筆電是 2x2，所以路由器有 4 根天線也只能對它送 2 個串流。</p>
+  <div class="panel">
+    <div class="row">
+      <div class="seg" id="miSeg" role="group" aria-label="天線數">
+        <button data-n="1" aria-pressed="false">1x1</button><button data-n="2" aria-pressed="true">2x2</button><button data-n="4" aria-pressed="false">4x4</button>
+      </div>
+      <span class="cap" id="miOut"></span>
+    </div>
+    <canvas id="cvMimo" aria-label="路由器和裝置各有多根天線，每種顏色是一個空間串流"></canvas>
+    <div class="cap">每種顏色是一個空間串流。淡色的線表示每根天線其實都收得到所有串流，接收端靠路徑的差異把它們分開。</div>
+  </div>
+</section>
+
+<section id="bf">
+  <h2><small>Beamforming &amp; MU-MIMO</small>波束成形與 MU-MIMO</h2>
+  <p>多根天線還有另一個用法。調整每根天線送出訊號的時間差，可以讓電波在某個方向互相加強、其他方向互相抵消，等於把能量集中送向裝置，這叫波束成形。同樣的距離，訊號更強、SNR 更高，就能用更高的 MCS。</p>
+  <p>MU-MIMO 更進一步：同時形成好幾道波束，各自對準不同的裝置，在同一個頻道、同一時間服務多台。它和 OFDMA 都是一次服務多台裝置，差別是 MU-MIMO 用空間（方向）來分，OFDMA 用頻率來分。</p>
+  <div class="panel">
+    <div class="seg" id="bfSeg" role="group" aria-label="傳送方式">
+      <button data-m="omni" aria-pressed="false">沒有波束成形</button><button data-m="bf" aria-pressed="true">波束成形</button><button data-m="mu" aria-pressed="false">MU-MIMO</button>
+    </div>
+    <canvas id="cvBf" style="height:260px" aria-label="路由器向三台裝置送出電波：均勻擴散、集中成一道波束、同時三道波束"></canvas>
+    <div class="cap" id="bfOut"></div>
+  </div>
+</section>
+
+<section id="csma">
+  <h2><small>CSMA/CA</small>CSMA/CA：先聽再說</h2>
+  <p>同一個頻道上，同一時間只能有一台裝置發射，不然訊號會撞在一起。Wi-Fi 沒有人統一指揮，靠的是每台裝置都遵守同一個規則：要傳之前先聽頻道有沒有人在用；沒人用，再隨機倒數一小段時間，數到 0 才傳。別人在傳的時候，倒數會暫停。</p>
+  <p>如果兩台剛好同時數到 0，就會碰撞，兩邊都要重傳，而且下次倒數的範圍會加大。裝置越多，等待和碰撞就越多，這是 Wi-Fi 人多就變慢的主要原因。附近鄰居用同一個頻道的路由器，也算在裡面。</p>
+  <div class="panel">
+    <div class="row">
+      <span class="cap">裝置數</span>
+      <div class="seg" id="csSeg" role="group" aria-label="裝置數">
+        <button data-n="2" aria-pressed="false">2</button><button data-n="4" aria-pressed="true">4</button><button data-n="8" aria-pressed="false">8</button>
+      </div>
+      <ul class="legend">
+        <li><span class="sw" style="background:var(--b5)"></span>傳送中</li>
+        <li><span class="sw" style="background:var(--bad)"></span>碰撞</li>
+        <li><span class="sw" style="background:var(--line)"></span>等別人傳完</li>
+        <li><span class="sw" style="background:transparent;border-bottom:3px dotted var(--muted);border-radius:0"></span>倒數中</li>
+      </ul>
+    </div>
+    <canvas id="cvCs" aria-label="每台裝置一排時間軸：倒數、傳送、等待、碰撞"></canvas>
+    <div class="cap" id="csOut"></div>
+  </div>
+</section>
+
 <section id="ofdma">
   <h2><small>Orthogonal frequency-division multiple access</small>OFDMA：把子載波分給多台裝置</h2>
   <p>傳統 OFDM 一次只服務一台裝置：不管封包多小，整個頻道都給它，其他裝置要排隊，每次傳送前還要重新競爭頻道。Wi-Fi 6 的 OFDMA 把子載波分成一組一組的資源單位（RU），同一次傳送可以同時服務好幾台裝置。</p>
@@ -223,6 +314,36 @@ footer{font-size:13px;color:var(--muted)}
     <canvas id="cvMa" aria-label="時間與頻率的格子：OFDM 一次一台裝置，OFDMA 一次多台裝置"></canvas>
     <div class="cap">橫軸是時間（往左流動），縱軸是頻率：一個 20 MHz 頻道最多可以切成 9 個最小的 RU（每個 26 個子載波）。</div>
     <div class="cap" id="maNote"></div>
+  </div>
+</section>
+
+<section id="mlo">
+  <h2><small>Multi-link operation</small>MLO：同時用好幾個頻段</h2>
+  <p>Wi-Fi 6 以前，一台裝置一次只能連在一個頻段的一個頻道上。那個頻道被干擾或很擁擠的時候，只能等。Wi-Fi 7 的 MLO 讓裝置同時和路由器建立好幾條連結，例如 5 GHz 和 6 GHz 各一條。</p>
+  <p>好處有兩個：幾條連結一起傳，速度可以相加；其中一條被干擾時，資料改走其他條，延遲更低也更穩定。</p>
+  <div class="panel">
+    <div class="seg" id="mlSeg" role="group" aria-label="連結方式">
+      <button data-m="single" aria-pressed="false">單一連結</button><button data-m="mlo" aria-pressed="true">MLO</button>
+    </div>
+    <canvas id="cvMlo" style="height:210px" aria-label="路由器和裝置之間的三條連結，封包沿著連結移動，5 GHz 偶爾被干擾"></canvas>
+    <div class="cap" id="mlOut"></div>
+  </div>
+</section>
+
+<section id="real">
+  <h2><small>Link rate vs. throughput</small>為什麼實際網速比連線速率低</h2>
+  <p>裝置上顯示的連線速率（例如 1201 Mbps）是照 MCS、頻寬、串流數算出來的理論值，代表「正在傳資料的那一瞬間」有多快。實際測到的網速通常只有它的五到七成，因為空中的時間不是全部都在傳你的資料。</p>
+  <div class="panel">
+    <div class="bar" id="rlBar" aria-hidden="true"></div>
+    <ul class="legend">
+      <li><span class="sw" style="background:var(--b5)"></span>實際資料，約 62%</li>
+      <li><span class="sw" style="background:var(--b6)"></span>表頭、確認回覆、封包間隔，約 18%</li>
+      <li><span class="sw" style="background:var(--b24)"></span>競爭頻道的等待，約 12%</li>
+      <li><span class="sw" style="background:var(--bad)"></span>重傳，約 8%</li>
+    </ul>
+    <label class="ctl" for="rlN"><span>同時大量傳輸的裝置數：<b id="rlNo"></b></span><input type="range" id="rlN" min="1" max="8" value="1"></label>
+    <div class="cap" id="rlOut"></div>
+    <div class="cap">比例是約略的示意值，實際依環境而定。另外，Wi-Fi 再快也不會超過你家的網路方案速度，而且同一個頻道的時間是所有裝置（包含鄰居的）一起分。</div>
   </div>
 </section>
 
@@ -400,6 +521,114 @@ function drawMa(t,dt){const[x,w,h]=fit($('#cvMa'));const rh=h/9;
   if(t-maAt>.6){maAt=t;const txt=U.map((u,i)=>`${u.n} ${cnt[i]} 次`).join('、');
     $('#maNote').innerHTML=(mode==='ofdm'?'<b>OFDM</b>：每次傳送只服務一台裝置，小封包也佔滿整個頻道，而且每次都要先等。':'<b>OFDMA</b>：每次傳送同時服務四台裝置，需要多的拿多一點 RU，等待次數少很多。')+` 畫面中各裝置被服務的次數：${txt}。`;}}
 
+/* ---------- 訊號與 SNR ---------- */
+let sg={rssi:-60,noise:-95};
+function sgUpdate(){const d=+$('#sgD').value,wl=+$('#sgWl').value,bw=+$('#sgB').value;
+  sg={rssi:-30-25*Math.log10(d)-5*wl,noise:-95+10*Math.log10(bw/20)};const snr=sg.rssi-sg.noise;let m=-1;MCS.forEach((v,i)=>{if(snr>=v[4])m=i;});
+  $('#sgDo').textContent=d+' 公尺';$('#sgWo').textContent=wl+' 面';
+  $('#sgOut').innerHTML=`訊號 <b class="mono">${sg.rssi.toFixed(0)} dBm</b>，雜訊 <b class="mono">${sg.noise.toFixed(0)} dBm</b>，SNR <b class="mono">${snr.toFixed(0)} dB</b>。`+
+    (m<0?'<span class="no">訊號太弱，連不上。</span>':`最高大約可用 <b>MCS ${m}</b>（${MCS[m][0]}，編碼率 ${MCS[m][2]}），2 個串流約 <b class="mono">${fmt(rate(m,bw,2,.8))}</b>。`);}
+['sgD','sgWl','sgB'].forEach(id=>$('#'+id).addEventListener('input',sgUpdate));sgUpdate();
+function drawSig(t){const[x,w,h]=fit($('#cvSig'));const X=v=>(v+108)/88*w,base=h-24,xn=X(sg.noise),xs=X(sg.rssi+(reduce?0:1.2*Math.sin(t*2.3)+.7*Math.sin(t*5.1)));
+  x.beginPath();x.moveTo(0,base);for(let px=0;px<=xn;px+=3)x.lineTo(px,base-34-5*Math.sin(px*.9+t*6)-4*Math.sin(px*.37-t*4));x.lineTo(xn,base);x.closePath();x.fillStyle=C.line;x.fill();
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textBaseline='bottom';x.textAlign='right';x.fillText('雜訊',xn-4,base-48);
+  x.fillStyle=C.accent;x.fillRect(xs-2,18,4,base-18);x.textAlign='center';x.font='600 12px '+FONT;x.fillText('訊號',xs,15);
+  if(xs-xn>8){const y=base-74;x.strokeStyle=C.fg;x.lineWidth=1.3;x.beginPath();x.moveTo(xn,y);x.lineTo(xs,y);x.moveTo(xn,y-5);x.lineTo(xn,y+5);x.moveTo(xs,y-5);x.lineTo(xs,y+5);x.stroke();
+    if(xs-xn>70){x.fillStyle=C.fg;x.fillText('SNR '+(sg.rssi-sg.noise).toFixed(0)+' dB',(xn+xs)/2,y-4);}}
+  x.strokeStyle=C.muted;x.lineWidth=1;x.beginPath();x.moveTo(0,base+.5);x.lineTo(w,base+.5);x.stroke();
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textBaseline='top';x.textAlign='center';
+  for(let v=-100;v<=-30;v+=10){x.beginPath();x.moveTo(X(v),base);x.lineTo(X(v),base+4);x.stroke();if(v%20===0||w>560)x.fillText(v,X(v),base+7);}
+  x.textAlign='right';x.fillText('dBm',w-2,base+7);x.textAlign='left';}
+
+/* ---------- 保護間隔 ---------- */
+let gi=.8,gd=.5;
+function giUpdate(){gd=+$('#giD').value;$('#giDo').textContent=gd.toFixed(1)+' µs（多走約 '+Math.round(gd*300)+' 公尺）';
+  $('#giOut').innerHTML=(gd<=gi?`<span class="ok">反射的延遲沒有超過保護間隔，資料不受影響。</span>`:`<span class="no">反射拖過了保護間隔，蓋到下一個符號的資料。要換更長的保護間隔。</span>`)+
+    ` 這個保護間隔佔每個符號時間的 ${(gi/(12.8+gi)*100).toFixed(0)}%。一般室內的反射延遲遠小於 0.8 µs，較長的保護間隔主要用在戶外或大空間。`;}
+seg($('#giSeg'),b=>{gi=+b.dataset.g;giUpdate();});$('#giD').addEventListener('input',giUpdate);giUpdate();
+function drawGi(t){const[x,w,h]=fit($('#cvGi'));const slot=12.8+gi,k=w/(2.4*slot),tot=t*2.2,n0=Math.floor(tot/slot),rh=h/3,bh=rh-26,pal=[C.b5,C.b6,C.b24];
+  ['直接到達的訊號','反射的訊號（晚到）','接收端看到的'].forEach((lb,r)=>{const y=r*rh+20;
+    for(let i=-1;i<=3;i++){const idx=n0+i,xs=(idx*slot-tot)*k+(r===1?gd*k:0),col=pal[((idx%3)+3)%3];
+      x.globalAlpha=r===1?.5:1;x.fillStyle=C.line;x.fillRect(xs,y,gi*k,bh);x.fillStyle=col;x.fillRect(xs+gi*k,y,12.8*k-1.5,bh);x.globalAlpha=1;
+      if(r===2&&gd>0){if(gd>gi){x.fillStyle=C.bad;x.fillRect(xs+gi*k,y,(gd-gi)*k,bh);}
+        x.strokeStyle=gd>gi?C.bad:C.b5;x.lineWidth=2;x.strokeRect(xs+1,y+1,Math.max(gd*k-2,1),bh-2);}}
+    x.fillStyle=C.panel;x.fillRect(0,r*rh,w,19);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textBaseline='top';x.textAlign='left';x.fillText(lb,2,r*rh+3);});}
+
+/* ---------- MIMO ---------- */
+let mi=2;
+function miSet(n){mi=n;$('#miOut').innerHTML=`${n} 個空間串流：80 MHz、MCS 11 約 <b class="mono">${fmt(rate(11,80,n,.8))}</b>`;}
+seg($('#miSeg'),b=>miSet(+b.dataset.n));miSet(2);
+function drawMimo(t){const[x,w,h]=fit($('#cvMimo'));const n=mi,xl=62,xr=w-62,gap=Math.min(46,(h-70)/Math.max(n-1,1)),Y=i=>h/2+8+(i-(n-1)/2)*gap,pal=[C.b5,C.b6,C.b24,C.u4];
+  x.strokeStyle=C.muted;x.lineWidth=1.5;x.fillStyle=C.panel;
+  [[8,'路由器'],[w-48,'裝置']].forEach(([bx,lb])=>{x.strokeRect(bx,Y(0)-18,40,Y(n-1)-Y(0)+36);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textBaseline='bottom';x.textAlign='center';x.fillText(lb,bx+20,Y(0)-24);});
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++){if(i===j)continue;x.strokeStyle=pal[i];x.globalAlpha=.16;x.lineWidth=1;x.beginPath();x.moveTo(xl,Y(i));x.lineTo(xr,Y(j));x.stroke();}
+  x.globalAlpha=1;
+  for(let i=0;i<n;i++){x.strokeStyle=pal[i];x.globalAlpha=.45;x.lineWidth=2;x.beginPath();x.moveTo(xl,Y(i));x.lineTo(xr,Y(i));x.stroke();x.globalAlpha=1;
+    x.fillStyle=pal[i];for(let m=0;m<5;m++){const p=((t*.3+m/5+i*.07)%1);x.beginPath();x.arc(xl+(xr-xl)*p,Y(i),4.5,0,7);x.fill();}
+    x.strokeStyle=C.fg;x.lineWidth=1.5;[[48,xl],[w-48,xr]].forEach(([a,b])=>{x.beginPath();x.moveTo(a,Y(i));x.lineTo(b,Y(i));x.stroke();});
+    x.fillStyle=C.fg;[xl,xr].forEach(ax=>{x.beginPath();x.arc(ax,Y(i),3.5,0,7);x.fill();});}}
+
+/* ---------- 波束成形 ---------- */
+let bfMode='bf';
+const BFT={omni:'電波往四面八方均勻擴散，大部分能量都沒有送到裝置那裡。',bf:'能量集中成一道波束，一次對準一台裝置，訊號更強。',mu:'同時形成三道波束，各自對準一台裝置，一次服務三台。'};
+function bfSet(m){bfMode=m;$('#bfOut').textContent=BFT[m];}
+seg($('#bfSeg'),b=>bfSet(b.dataset.m));bfSet('bf');
+function drawBf(t){const[x,w,h]=fit($('#cvBf'));const ax=44,ay=h/2,cl=[[w-46,h*.2,C.b24,'電視'],[w-36,h*.56,C.b5,'筆電'],[w*.66,h*.88,C.b6,'手機']],cur=Math.floor(t/3)%3;
+  const active=i=>bfMode==='mu'||(bfMode==='bf'&&i===cur);
+  if(bfMode==='omni'){for(let k=0;k<7;k++){const r=((t*55+k*w/7)%w);x.strokeStyle=C.accent;x.globalAlpha=Math.max(0,(1-r/w))*.45;x.lineWidth=2;x.beginPath();x.arc(ax,ay,r,-Math.PI/2,Math.PI/2);x.stroke();}}
+  else cl.forEach((c,i)=>{if(!active(i))return;const a=Math.atan2(c[1]-ay,c[0]-ax),d=Math.hypot(c[0]-ax,c[1]-ay)-14;
+    x.fillStyle=c[2];x.globalAlpha=.1;x.beginPath();x.moveTo(ax,ay);x.arc(ax,ay,d,a-.13,a+.13);x.closePath();x.fill();
+    for(let k=0;k<7;k++){const r=((t*70+k*d/7)%d);x.strokeStyle=c[2];x.globalAlpha=.35+.55*(r/d);x.lineWidth=2.6;x.beginPath();x.arc(ax,ay,r,a-.13,a+.13);x.stroke();}});
+  x.globalAlpha=1;x.fillStyle=C.fg;x.fillRect(ax-26,ay-30,14,60);for(let i=0;i<4;i++){x.fillRect(ax-12,ay-23+i*15,10,2.5);}
+  x.font='600 12px '+FONT;x.textBaseline='top';x.textAlign='center';x.fillText('路由器',ax-8,ay+36);
+  cl.forEach((c,i)=>{const on=bfMode==='omni'?false:active(i);x.lineWidth=2;x.strokeStyle=c[2];x.fillStyle=on?c[2]:C.panel;x.beginPath();x.rect(c[0]-12,c[1]-9,24,18);x.fill();x.stroke();
+    x.fillStyle=C.fg;x.textAlign='center';x.textBaseline='bottom';x.fillText(c[3],c[0],c[1]-13);});x.textAlign='left';}
+
+/* ---------- CSMA/CA ---------- */
+let cs={st:[],gap:0,ok:0,coll:0,acc:0,at:0};const rnd=n=>Math.floor(Math.random()*n);
+function csStep(){const S=cs.st;
+  if(S.some(s=>s.tx>0)){S.forEach(s=>{if(s.tx>0){s.hist.push(s.col?'c':'t');if(--s.tx===0){s.bo=1+rnd(s.col?32:16);s.col=false;}}else s.hist.push('f');});if(!S.some(s=>s.tx>0))cs.gap=2;}
+  else if(cs.gap>0){cs.gap--;S.forEach(s=>s.hist.push('i'));}
+  else{const z=S.filter(s=>s.bo===0);if(z.length){const col=z.length>1;col?cs.coll++:cs.ok++;z.forEach(s=>{s.tx=9+rnd(8);s.col=col;});return csStep();}
+    S.forEach(s=>{s.hist.push('b');s.bo--;});}
+  S.forEach(s=>{if(s.hist.length>400)s.hist.shift();});}
+function csSet(n){cs={st:Array.from({length:n},()=>({bo:rnd(16),tx:0,col:false,hist:[]})),gap:0,ok:0,coll:0,acc:0,at:0};for(let i=0;i<260;i++)csStep();}
+seg($('#csSeg'),b=>csSet(+b.dataset.n));csSet(4);
+function drawCs(t,dt){const[x,w,h]=fit($('#cvCs'));if(!reduce){cs.acc+=dt;while(cs.acc>.075){cs.acc-=.075;csStep();}}
+  const n=cs.st.length,rh=h/n,bh=Math.min(22,rh-6),tw=5,pal=[C.b5,C.b6,C.b24,C.u4],lw=30;
+  cs.st.forEach((s,r)=>{const y=r*rh+(rh-bh)/2,L=s.hist.length;
+    for(let i=L-1;i>=0;i--){const px=w-(L-i)*tw;if(px<lw)break;const c=s.hist[i];
+      if(c==='t'){x.fillStyle=pal[r%4];x.fillRect(px,y,tw+.5,bh);}
+      else if(c==='c'){x.fillStyle=C.bad;x.fillRect(px,y,tw+.5,bh);}
+      else if(c==='f'){x.fillStyle=C.line;x.fillRect(px,y+bh*.3,tw+.5,bh*.4);}
+      else if(c==='b'){x.fillStyle=C.muted;x.fillRect(px+1,y+bh/2-1.5,2.5,3);}}
+    x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textBaseline='middle';x.textAlign='left';x.fillText('#'+(r+1),2,y+bh/2);});
+  if(t-cs.at>.5||t<cs.at){cs.at=t;$('#csOut').innerHTML=`成功傳送 <b class="mono">${cs.ok}</b> 次，碰撞 <b class="mono">${cs.coll}</b> 次（碰撞率 ${(cs.coll/Math.max(1,cs.ok+cs.coll)*100).toFixed(0)}%）。把裝置數調高，看等待和碰撞怎麼變多。`;}}
+
+/* ---------- MLO ---------- */
+const ML=[{n:'2.4 GHz',c:'b24',r:1.4},{n:'5 GHz',c:'b5',r:3},{n:'6 GHz',c:'b6',r:4}];
+let ml={mode:'mlo',pk:[],acc:[0,0,0],done:0,at:0};
+function mlSet(m){ml={mode:m,pk:[],acc:[0,0,0],done:0,at:0};ML.forEach((L,i)=>{if(m==='mlo'||i===1)[.15,.45,.75].forEach(p=>ml.pk.push({l:i,p}));});}
+seg($('#mlSeg'),b=>mlSet(b.dataset.m));mlSet('mlo');
+function drawMlo(t,dt){const[x,w,h]=fit($('#cvMlo'));const xl=66,xr=w-66,Y=i=>h*(.24+.27*i),jam=!reduce&&(t%7)>3.5&&(t%7)<6;
+  if(reduce)dt=0;
+  ML.forEach((L,i)=>{const used=ml.mode==='mlo'||i===1;if(used&&!(i===1&&jam)){ml.acc[i]+=dt*L.r;while(ml.acc[i]>1){ml.acc[i]--;ml.pk.push({l:i,p:0});}}});
+  ml.pk.forEach(p=>p.p+=dt*.42);ml.done+=ml.pk.filter(p=>p.p>=1).length;ml.pk=ml.pk.filter(p=>p.p<1);
+  ML.forEach((L,i)=>{const used=ml.mode==='mlo'||i===1;x.globalAlpha=used?.5:.15;x.strokeStyle=C[L.c];x.lineWidth=used?3:2;x.setLineDash(used?[]:[5,5]);x.beginPath();x.moveTo(xl,Y(i));x.lineTo(xr,Y(i));x.stroke();x.setLineDash([]);
+    x.globalAlpha=used?1:.5;x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textBaseline='bottom';x.textAlign='left';x.fillText(L.n+(used?'':'（沒在用）'),xl+6,Y(i)-8);x.globalAlpha=1;});
+  ml.pk.forEach(p=>{x.fillStyle=C[ML[p.l].c];x.fillRect(xl+(xr-xl)*p.p-6,Y(p.l)-5,12,10);});
+  if(jam){const jx=(xl+xr)/2-34;x.fillStyle=C.panel;x.fillRect(jx,Y(1)-17,68,34);x.fillStyle=C.bad;x.globalAlpha=.22;x.fillRect(jx,Y(1)-17,68,34);x.globalAlpha=1;x.strokeStyle=C.bad;x.lineWidth=1.5;x.strokeRect(jx,Y(1)-17,68,34);
+    x.fillStyle=C.bad;x.font='600 12px '+FONT;x.textAlign='center';x.textBaseline='middle';x.fillText('干擾',jx+34,Y(1));}
+  x.strokeStyle=C.muted;x.lineWidth=1.5;x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='center';x.textBaseline='bottom';
+  [[10,'路由器'],[w-54,'裝置']].forEach(([bx,lb])=>{x.strokeRect(bx,Y(0)-16,44,Y(2)-Y(0)+32);x.fillText(lb,bx+22,Y(0)-20);});x.textAlign='left';
+  if(t-ml.at>.5||t<ml.at){ml.at=t;$('#mlOut').innerHTML=(ml.mode==='mlo'?'<b>MLO</b>：三條連結一起傳。5 GHz 被干擾時，另外兩條照常傳。':'<b>單一連結</b>：只用 5 GHz。它被干擾時，資料就整個停住。')+` 已送達 <b class="mono">${ml.done}</b> 個封包。`;}}
+
+/* ---------- 實際網速 ---------- */
+function rlUpdate(){const n=+$('#rlN').value,link=rate(11,80,2,.8);$('#rlNo').textContent=n+' 台';
+  $('#rlBar').innerHTML=[[.62,'b5'],[.18,'b6'],[.12,'b24'],[.08,'bad']].map(p=>`<div style="flex:${p[0]};background:var(--${p[1]})"></div>`).join('');
+  $('#rlOut').innerHTML=`連線速率 <b class="mono">${fmt(link)}</b>（2 串流、80 MHz、MCS 11）時，實際大約 <b class="mono">${fmt(link*.62)}</b>。`+(n>1?`${n} 台裝置平分時間，每台大約 <b class="mono">${fmt(link*.62/n)}</b>。`:'');}
+$('#rlN').addEventListener('input',rlUpdate);rlUpdate();
+
 /* ---------- 迴圈 ---------- */
 const vis=new Map();const io=new IntersectionObserver(es=>es.forEach(e=>vis.set(e.target.id,e.isIntersecting)),{rootMargin:'80px'});
 document.querySelectorAll('canvas').forEach(c=>{vis.set(c.id,true);io.observe(c);});
@@ -409,6 +638,12 @@ function frame(ms){const now=ms/1000,dt=Math.min(.05,prev?now-prev:0);prev=now;c
   if(vis.get('cvCh'))drawCh(reduce?0:t);
   if(vis.get('cvQam'))mcsText(drawQam(),ms);
   if(vis.get('cvOfdm'))drawOfdm(t);
+  if(vis.get('cvSig'))drawSig(t);
+  if(vis.get('cvGi'))drawGi(t);
+  if(vis.get('cvMimo'))drawMimo(t);
+  if(vis.get('cvBf'))drawBf(t);
+  if(vis.get('cvCs'))drawCs(now,dt);
+  if(vis.get('cvMlo'))drawMlo(now,dt);
   if(vis.get('cvMa'))drawMa(reduce?maAt+1:now,dt);
   requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
