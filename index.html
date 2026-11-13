@@ -95,9 +95,9 @@ footer{font-size:13px;color:var(--muted)}
 <div class="wrap">
 <header>
   <h1>Wi-Fi 技術入門</h1>
-  <p>Wi-Fi 的速度由幾件事決定：用哪個頻段、頻道有多寬、每個符號塞幾個 bit，以及頻道怎麼分給多台裝置。下面每個主題都有一個可以動手玩的動畫。</p>
+  <p>Wi-Fi 的速度由幾件事決定：用哪個頻段、頻道有多寬、頻道怎麼切成子載波、每個子載波塞幾個 bit，以及怎麼分給多台裝置。下面每個主題都有一個可以動手玩的動畫。</p>
   <nav aria-label="章節">
-    <a href="#band">頻段</a><a href="#channel">頻道與頻寬</a><a href="#mcs">MCS</a><a href="#ofdm">OFDM</a><a href="#ofdma">OFDMA</a><a href="#gen">世代比較</a>
+    <a href="#band">頻段</a><a href="#channel">頻道與頻寬</a><a href="#ofdm">OFDM</a><a href="#mcs">MCS</a><a href="#ofdma">OFDMA</a><a href="#gen">世代比較</a>
   </nav>
 </header>
 
@@ -146,9 +146,26 @@ footer{font-size:13px;color:var(--muted)}
   </div>
 </section>
 
+<section id="ofdm">
+  <h2><small>Orthogonal frequency-division multiplexing</small>OFDM：把頻道切成很多子載波</h2>
+  <p>Wi-Fi 不是用一個很寬的載波傳資料，而是把頻道切成很多窄的子載波，同時各傳一點資料。子載波排得很密、頻譜互相重疊，但每個子載波的峰值剛好落在其他子載波的零點上，所以互不干擾，這就是「正交」。</p>
+  <div class="panel">
+    <div class="row">
+      <div class="seg" id="scSeg" role="group" aria-label="子載波間距">
+        <button data-n="8" aria-pressed="true">Wi-Fi 5 以前</button><button data-n="32" aria-pressed="false">Wi-Fi 6 以後</button>
+      </div>
+      <span class="cap mono" id="scInfo"></span>
+    </div>
+    <canvas id="cvOfdm" aria-label="OFDM 子載波頻譜：峰值對準其他子載波的零點"></canvas>
+    <div class="cap">橫軸是頻率。虛線標出一個子載波的峰值，其他子載波在這個頻率上都剛好是 0。每換一個符號，各子載波的振幅就跟著資料改變。Wi-Fi 6 把子載波間距縮成四分之一，同樣的頻寬可以放四倍的子載波。</div>
+  </div>
+</section>
+
 <section id="mcs">
   <h2><small>Modulation and coding scheme</small>MCS：一個符號裝幾個 bit</h2>
   <p>MCS 是一張編號表，每個編號代表一種「調變方式 + 編碼率」的組合。調變的點越多（例如 1024-QAM），每個符號帶的 bit 越多，但點和點靠得越近，需要越乾淨的訊號。路由器會依訊號品質自動選 MCS。</p>
+  <p><b>星座圖怎麼看：</b>無線電波可以調整的東西有兩個，振幅（強弱）和相位（波形的時間差）。圖上每個點代表一種「振幅 + 相位」的組合：離原點越遠，振幅越大；和橫軸的夾角就是相位。橫軸 I（同相）和縱軸 Q（正交）是把這個組合拆成兩個互相垂直的分量，就像用 x、y 座標表示一個方向和距離。兩軸沒有實體單位，圖上是把平均訊號功率當成 1 的相對值。</p>
+  <p>每個子載波在每個符號時間送出其中一個點，接收端看收到的訊號最靠近哪個點，就還原出對應的 bit。64-QAM 有 64 個點，所以一個點可以代表 6 個 bit。</p>
   <div class="panel">
     <div class="mcs">
       <canvas id="cvQam" aria-label="星座圖：理想點與收到的訊號點"></canvas>
@@ -172,27 +189,12 @@ footer{font-size:13px;color:var(--muted)}
         </div>
       </div>
     </div>
-    <div class="cap">灰點是理想位置，彩色點是加上雜訊後收到的訊號；紅點代表被判讀成錯的符號。速率以 Wi-Fi 6 / 7 的規格計算，是理論的連線速率，實際傳輸量會低一些。</div>
+    <div class="cap">灰點是理想位置，彩色點是加上雜訊後收到的訊號；紅點代表被判讀成錯的符號。箭頭輪流指向其中一個點，示範它的振幅（箭頭長度）和相位（夾角）。速率以 Wi-Fi 6 / 7 的規格計算，是理論的連線速率，實際傳輸量會低一些。</div>
   </div>
   <div class="panel">
     <h3>MCS 對照表</h3>
     <div class="scroll"><table id="mcsTable"></table></div>
     <div class="cap">速率欄：80 MHz、1 個空間串流、保護間隔 0.8 µs。所需 SNR 是約略參考值，實際依裝置而異。</div>
-  </div>
-</section>
-
-<section id="ofdm">
-  <h2><small>Orthogonal frequency-division multiplexing</small>OFDM：把頻道切成很多子載波</h2>
-  <p>Wi-Fi 不是用一個很寬的載波傳資料，而是把頻道切成很多窄的子載波，同時各傳一點資料。子載波排得很密、頻譜互相重疊，但每個子載波的峰值剛好落在其他子載波的零點上，所以互不干擾，這就是「正交」。</p>
-  <div class="panel">
-    <div class="row">
-      <div class="seg" id="scSeg" role="group" aria-label="子載波間距">
-        <button data-n="8" aria-pressed="true">Wi-Fi 5 以前</button><button data-n="32" aria-pressed="false">Wi-Fi 6 以後</button>
-      </div>
-      <span class="cap mono" id="scInfo"></span>
-    </div>
-    <canvas id="cvOfdm" aria-label="OFDM 子載波頻譜：峰值對準其他子載波的零點"></canvas>
-    <div class="cap">橫軸是頻率。虛線標出一個子載波的峰值，其他子載波在這個頻率上都剛好是 0。每換一個符號，各子載波的振幅就跟著資料改變。Wi-Fi 6 把子載波間距縮成四分之一，同樣的頻寬可以放四倍的子載波。</div>
   </div>
 </section>
 
@@ -308,6 +310,8 @@ function qamGeom(){const bits=MCS[mcs][1];if(bits===1)return{L:2,sc:1,bpsk:true}
 function resample(){const g=qamGeom();samples=Array.from({length:260},()=>newSample(g.L));}
 function drawQam(){const cv=$('#cvQam');const[x,w,h]=fit(cv);const g=qamGeom(),ext=1.95,P=v=>w/2+v/ext*(w/2-4),Q=v=>h/2-v/ext*(h/2-4);
   x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(w/2,0);x.lineTo(w/2,h);x.moveTo(0,h/2);x.lineTo(w,h/2);x.stroke();
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textBaseline='bottom';x.textAlign='right';x.fillText('I（同相）',w-2,h/2-4);
+  x.textAlign='left';x.textBaseline='top';x.fillText('Q（正交）',w/2+5,2);
   const lv=i=>(2*i-(g.L-1))*g.sc;const r=g.L>=32?.8:g.L>=16?1.2:2.2;
   x.fillStyle=C.muted;x.globalAlpha=g.L>=32?.55:.8;
   for(let i=0;i<g.L;i++)for(let q=0;q<(g.bpsk?1:g.L);q++){x.beginPath();x.arc(P(lv(i)),Q(g.bpsk?0:lv(q)),r,0,7);x.fill();}
@@ -317,7 +321,16 @@ function drawQam(){const cv=$('#cvQam');const[x,w,h]=fit(cv);const g=qamGeom(),e
   const dec=v=>Math.max(0,Math.min(g.L-1,Math.round((v/g.sc+(g.L-1))/2)));
   samples.forEach(s=>{const rx=lv(s.i)+s.a*sig,ry=(g.bpsk?0:lv(s.q))+s.b*sig;const bad=dec(rx)!==s.i||(!g.bpsk&&dec(ry)!==s.q);if(bad)err++;
     x.fillStyle=bad?C.bad:C.accent;x.globalAlpha=bad?.9:.55;x.beginPath();x.arc(P(Math.max(-ext,Math.min(ext,rx))),Q(Math.max(-ext,Math.min(ext,ry))),1.8,0,7);x.fill();});
-  x.globalAlpha=1;return err/samples.length;}
+  x.globalAlpha=1;
+  const kk=reduce?0:Math.floor(performance.now()/2600),qd=Math.floor(g.L/4),pick=[[g.L-1,g.L-1],[qd,g.L-1],[0,qd],[g.L-1-qd,0]][kk%4],ai=pick[0],aq=pick[1],ax=P(lv(ai)),ay=Q(g.bpsk?0:lv(aq)),ang=Math.atan2(ay-h/2,ax-w/2);
+  x.strokeStyle=C.fg;x.fillStyle=C.fg;x.lineWidth=1.6;x.beginPath();x.moveTo(w/2,h/2);x.lineTo(ax,ay);x.stroke();
+  x.beginPath();x.arc(ax,ay,3.2,0,7);x.fill();
+  if(Math.abs(ang)>.05){x.lineWidth=1;x.beginPath();x.arc(w/2,h/2,18,0,ang,ang<0);x.stroke();}
+  const sd=ang<0?-1:1,pa=ang+sd*Math.PI/2;
+  x.font='600 11px '+FONT;x.textBaseline='middle';x.textAlign='center';
+  x.fillText('振幅',(w/2+ax)/2+13*Math.cos(pa),(h/2+ay)/2+13*Math.sin(pa));
+  x.fillText('相位',w/2+34*Math.cos(ang/2),h/2+34*Math.sin(ang/2));
+  return err/samples.length;}
 let lastSer=-1,serAt=0;
 function mcsText(ser,now){if(now-serAt<400&&lastSer>=0)return;serAt=now;lastSer=ser;const m=MCS[mcs],ok=snr>=m[4];
   $('#mcsVerdict').innerHTML=`目前判讀錯誤的符號：<b class="mono">${(ser*100).toFixed(0)}%</b>。這個 MCS 大約需要 SNR ≥ ${m[4]} dB，`+
