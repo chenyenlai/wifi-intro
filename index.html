@@ -148,7 +148,9 @@ footer{font-size:13px;color:var(--muted)}
 
 <section id="ofdm">
   <h2><small>Orthogonal frequency-division multiplexing</small>OFDM：把頻道切成很多子載波</h2>
-  <p>Wi-Fi 不是用一個很寬的載波傳資料，而是把頻道切成很多窄的子載波，同時各傳一點資料。子載波排得很密、頻譜互相重疊，但每個子載波的峰值剛好落在其他子載波的零點上，所以互不干擾，這就是「正交」。</p>
+  <p>Wi-Fi 不是用一個很寬的載波傳資料，而是把頻道切成很多窄的子載波，每個子載波各自傳一小部分資料，全部同時送出。</p>
+  <p>下圖的每一條曲線是一個子載波的頻譜，也就是它的能量在頻率上的分布：中間一個高峰，兩旁有越來越小的波紋。</p>
+  <p>傳統的分頻做法，載波之間要留空隙才不會互相干擾，很浪費頻譜。OFDM 讓子載波互相重疊、排得更密。只要間距選得剛好，每個子載波的高峰就會落在其他所有子載波的零點上。接收端只在高峰的位置讀取，讀到的就只有那一個子載波的資料，這就是「正交」。</p>
   <div class="panel">
     <div class="row">
       <div class="seg" id="scSeg" role="group" aria-label="子載波間距">
@@ -156,8 +158,12 @@ footer{font-size:13px;color:var(--muted)}
       </div>
       <span class="cap mono" id="scInfo"></span>
     </div>
-    <canvas id="cvOfdm" aria-label="OFDM 子載波頻譜：峰值對準其他子載波的零點"></canvas>
-    <div class="cap">橫軸是頻率。虛線標出一個子載波的峰值，其他子載波在這個頻率上都剛好是 0。每換一個符號，各子載波的振幅就跟著資料改變。Wi-Fi 6 把子載波間距縮成四分之一，同樣的頻寬可以放四倍的子載波。</div>
+    <canvas id="cvOfdm" style="height:310px" aria-label="上排是傳統分頻，載波之間留空隙；下排是 OFDM，子載波重疊，峰值對準其他子載波的零點"></canvas>
+    <ul class="legend">
+      <li><span class="sw" style="background:var(--accent)"></span>目前標出的子載波</li>
+      <li><span class="sw" style="background:transparent;border:1.5px solid var(--fg);border-radius:50%"></span>其他子載波在這個頻率的值：剛好是 0</li>
+    </ul>
+    <div class="cap">橫軸是頻率，上下兩排佔用的頻寬一樣。藍色粗線會輪流標出每一個子載波：看虛線的位置，只有藍色這條在高峰，其他每一條都剛好穿過 0。Wi-Fi 6 把子載波間距縮成四分之一，同樣的頻寬可以放四倍的子載波。</div>
   </div>
 </section>
 
@@ -347,23 +353,31 @@ $('#mcsTable').innerHTML='<tr><th>MCS</th><th>調變</th><th>編碼率</th><th>�
 ['mcsSel','snrSel','rW','rS','rG'].forEach(id=>$('#'+id).addEventListener('input',()=>mcsUpdate(false)));mcsUpdate(true);
 
 /* ---------- 4. OFDM ---------- */
-let scN=8,amps=[],tgt=[],symIdx=-1;
-function scSet(n){scN=n;amps=Array.from({length:n},()=>1);tgt=amps.slice();symIdx=-1;
+let scN=8;
+function scSet(n){scN=n;
   $('#scInfo').textContent=n===8?'間距 312.5 kHz · 20 MHz 有 64 個子載波 · 符號長 3.2 µs':'間距 78.125 kHz · 20 MHz 有 256 個子載波 · 符號長 12.8 µs';}
 seg($('#scSeg'),b=>scSet(+b.dataset.n));scSet(8);
-function drawOfdm(t){const[x,w,h]=fit($('#cvOfdm'));const N=scN,D=w/(N+3),base=h*.6,A=h*.46,vals=[1,.55,-.55,-1];
-  const si=Math.floor(t/1.8);if(si!==symIdx){symIdx=si;tgt=tgt.map(()=>vals[Math.floor(Math.random()*4)]);}
-  amps=amps.map((a,i)=>reduce?tgt[i]:a+(tgt[i]-a)*.08);
-  const hi=((si%N)+N)%N,fc=k=>D*(k+2);
-  x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(0,base+.5);x.lineTo(w,base+.5);x.stroke();
-  const curve=k=>{x.beginPath();for(let px=0;px<=w;px+=1.5){const u=(px-fc(k))/D,s=Math.abs(u)<1e-6?1:Math.sin(Math.PI*u)/(Math.PI*u),y=base-amps[k]*s*A;px?x.lineTo(px,y):x.moveTo(px,y);}};
-  const pal=[C.b5,C.b6,C.b24,C.u4];
-  for(let k=0;k<N;k++){if(k===hi)continue;curve(k);x.strokeStyle=pal[k%4];x.globalAlpha=N>8?.3:.45;x.lineWidth=1.2;x.stroke();}
-  x.globalAlpha=1;curve(hi);x.strokeStyle=C.accent;x.lineWidth=2.4;x.stroke();
-  x.setLineDash([4,4]);x.strokeStyle=C.fg;x.lineWidth=1;x.beginPath();x.moveTo(fc(hi),6);x.lineTo(fc(hi),h-6);x.stroke();x.setLineDash([]);
-  x.fillStyle=C.panel;x.strokeStyle=C.fg;for(let k=0;k<N;k++){if(k===hi)continue;x.beginPath();x.arc(fc(k),base,N>8?1.6:3,0,7);x.fill();x.stroke();}
-  x.fillStyle=C.muted;x.font='11px '+FONT;x.textBaseline='bottom';x.textAlign=fc(hi)>w/2?'right':'left';
-  x.fillText('符號 #'+(si+1)+'：這個子載波的峰值',fc(hi)+(fc(hi)>w/2?-6:6),h-4);x.textAlign='left';}
+function drawOfdm(t){const[x,w,h]=fit($('#cvOfdm'));const N=scN,D=w/(N+3),fc=k=>D*(k+2);
+  const pal=[C.b5,C.b6,C.b24,C.u4];x.font='600 12px '+FONT;x.textBaseline='top';x.textAlign='left';
+  /* 上排：傳統分頻 */
+  const b1=h*.36,A1=h*.22,x0=D*1.5,span=N*D,M=4,slot=span/M,bw=slot*.62;
+  x.fillStyle=C.fg;x.fillText('傳統分頻：載波之間要留空隙',2,2);
+  x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(0,b1+.5);x.lineTo(w,b1+.5);x.stroke();
+  for(let i=0;i<M;i++){const c=x0+slot*(i+.5);x.beginPath();x.moveTo(c-bw/2,b1);
+    for(let px=-bw/2;px<=bw/2;px+=2)x.lineTo(c+px,b1-A1*Math.cos(Math.PI*px/bw)**2);x.lineTo(c+bw/2,b1);x.closePath();
+    x.globalAlpha=.25;x.fillStyle=pal[i%4];x.fill();x.globalAlpha=1;x.strokeStyle=pal[i%4];x.lineWidth=1.6;x.stroke();
+    if(i<M-1){const g0=c+bw/2,g1=c+slot-bw/2;x.globalAlpha=.6;x.fillStyle=C.line;x.fillRect(g0,b1-A1*.55,g1-g0,A1*.55);x.globalAlpha=1;
+      if(g1-g0>26){x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.fillText('空隙',(g0+g1)/2,b1+5);x.textAlign='left';x.font='600 12px '+FONT;}}}
+  /* 下排：OFDM */
+  const b2=h*.87,A2=h*.36,hi=((Math.floor(t/1.8)%N)+N)%N;
+  x.fillStyle=C.fg;x.fillText('OFDM：互相重疊，同樣的寬度放更多',2,h*.43);
+  x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(0,b2+.5);x.lineTo(w,b2+.5);x.stroke();
+  const curve=k=>{x.beginPath();for(let px=0;px<=w;px+=1.5){const u=(px-fc(k))/D,s=Math.abs(u)<1e-6?1:Math.sin(Math.PI*u)/(Math.PI*u),y=b2-s*A2;px?x.lineTo(px,y):x.moveTo(px,y);}};
+  for(let k=0;k<N;k++){if(k===hi)continue;curve(k);x.strokeStyle=pal[k%4];x.globalAlpha=N>8?.3:.5;x.lineWidth=1.2;x.stroke();}
+  x.globalAlpha=1;curve(hi);x.strokeStyle=C.accent;x.lineWidth=2.6;x.stroke();
+  x.setLineDash([4,4]);x.strokeStyle=C.fg;x.lineWidth=1;x.beginPath();x.moveTo(fc(hi),b2-A2-10);x.lineTo(fc(hi),b2+12);x.stroke();x.setLineDash([]);
+  x.fillStyle=C.accent;x.beginPath();x.arc(fc(hi),b2-A2,4,0,7);x.fill();
+  x.fillStyle=C.panel;x.strokeStyle=C.fg;x.lineWidth=1.3;for(let k=0;k<N;k++){if(k===hi)continue;x.beginPath();x.arc(fc(k),b2,N>8?1.8:3.5,0,7);x.fill();x.stroke();}}
 
 /* ---------- 5. OFDMA ---------- */
 const U=[{n:'電視',c:'b24',w:58},{n:'筆電',c:'b5',w:38},{n:'手機',c:'b6',w:24},{n:'感測器',c:'u4',w:12}];
