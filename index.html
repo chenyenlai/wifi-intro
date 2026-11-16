@@ -382,7 +382,26 @@ footer{font-size:13px;color:var(--muted)}
   </div>
 
   <div class="step">
-    <h3 class="sub"><span>6</span>全部排在一起</h3>
+    <h3 class="sub"><span>6</span>用旋轉箭頭來看：怎麼讀出一個子載波的值</h3>
+    <p>每個子載波可以想成一根一直在轉的箭頭：<b>長度是振幅，起始角度是相位</b>，在一個符號時間裡，第 1 個子載波轉 1 圈，第 2 個轉 2 圈，依此類推。收到的訊號，就是這些箭頭全部加在一起。</p>
+    <p>接收端想讀第 2 個子載波時，就讓自己的參考訊號「反方向每個符號轉 2 圈」。這等於把所有箭頭都倒轉 2 圈：第 2 根剛好停住，其他的還在轉（第 3 根剩 1 圈、第 4 根剩 2 圈、第 1 根倒轉 1 圈）。就像用頻閃燈看轉動的輪子，閃的速度和某個輪子一樣，那個輪子看起來就停住了。</p>
+    <p>接著把整個符號時間的結果累加起來：停住的那根一直指同一個方向，越加越長；還在轉的，剛好轉整數圈，往各個方向的份量互相抵消，最後回到 0。累加完剩下的，就是想讀的那根箭頭：長度是強度，角度是相位，也就是頻譜在那個頻率的值。</p>
+    <div class="panel">
+      <div class="row">
+        <span class="cap">要讀哪一個子載波</span>
+        <div class="seg" id="phSeg" role="group" aria-label="要讀哪一個子載波">
+          <button data-k="0" aria-pressed="false">都不讀</button><button data-k="1" aria-pressed="false">第 1 個</button><button data-k="2" aria-pressed="true">第 2 個</button><button data-k="3" aria-pressed="false">第 3 個</button><button data-k="4" aria-pressed="false">第 4 個</button>
+        </div>
+      </div>
+      <canvas id="cvPh" style="height:330px;max-width:100%" aria-label="四個子載波的旋轉箭頭，以及一個符號時間內累加的結果"></canvas>
+      <div class="cap" id="phOut"></div>
+      <div class="cap">上排是每個子載波的箭頭「在接收端看起來」怎麼轉，灰色虛線是它真正的資料（長度和角度）。下排是從符號開始到現在累加的結果。最下面的長條是一個符號時間的進度，跑完一次就重新開始。</div>
+    </div>
+    <p>讀到之後還有兩步：先用封包開頭那段雙方都知道內容的「標準答案」，算出每個子載波在路上被縮短多少、轉了幾度，把箭頭校正回來；再看箭頭尖端落在星座圖的哪個點，換回對應的 bit。</p>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>7</span>全部排在一起</h3>
     <p>把上面幾件事放在一起，就是下面這張圖：每個子載波都是一座山，彼此重疊，但每一座的山頂都對準其他所有子載波的零點。</p>
   </div>
   <div class="panel">
@@ -1181,6 +1200,31 @@ function drawFt(){const[x,w,h]=fit($('#cvFt'));const gap=26,cw=(w-gap)/2,R0=cw+g
     x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText('f₀',X0,pBot+3);}
   x.textAlign='left';}
 
+/* ---------- OFDM：旋轉箭頭讀值 ---------- */
+const PH=[{a:.85,p:Math.PI/4,c:'b5'},{a:1,p:3*Math.PI/4,c:'b6'},{a:.7,p:-Math.PI/3,c:'b24'},{a:.9,p:Math.PI,c:'u4'}];
+let phK=2,phAt=0;
+seg($('#phSeg'),b=>{phK=+b.dataset.k;});
+function drawPh(t){const cv=$('#cvPh'),ww=cv.getBoundingClientRect().width,Rn=Math.min(ww/8-12,58),need=Math.round(124+3.6*Rn)+'px';if(cv.style.height!==need)cv.style.height=need;
+  const[x,w,h]=fit(cv);const n=4,cw=w/n,R=Math.min(cw/2-12,58),cy1=36+R,cy2=cy1+R+44+R*.8,R2=R*.8,p=reduce?1:Math.min(1,(t*.18)%1.25);
+  x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText('看起來的樣子',2,0);x.fillText('累加的結果',2,cy1+R+22);
+  PH.forEach((s,i)=>{const k=i+1,cx=cw*i+cw/2,d=phK?k-phK:k,ang=s.p+2*Math.PI*d*p,col=C[s.c];
+    x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.arc(cx,cy1,R,0,7);x.stroke();
+    x.setLineDash([3,3]);x.strokeStyle=C.muted;x.beginPath();x.moveTo(cx,cy1);x.lineTo(cx+R*s.a*Math.cos(s.p),cy1-R*s.a*Math.sin(s.p));x.stroke();x.setLineDash([]);
+    const ex=cx+R*s.a*Math.cos(ang),ey=cy1-R*s.a*Math.sin(ang);x.strokeStyle=col;x.lineWidth=3;x.beginPath();x.moveTo(cx,cy1);x.lineTo(ex,ey);x.stroke();x.fillStyle=col;x.beginPath();x.arc(ex,ey,4,0,7);x.fill();
+    x.fillStyle=k===phK?C.accent:C.fg;x.font=(k===phK?'600 ':'')+'12px '+FONT;x.textAlign='center';x.textBaseline='top';
+    x.fillText('第 '+k+' 個',cx,cy1+R+4);
+    x.fillStyle=C.muted;x.font='11px '+FONT;x.textBaseline='bottom';x.fillText(d===0?'停住了':(d>0?'轉 '+d+' 圈':'倒轉 '+(-d)+' 圈'),cx,cy1-R-2);
+    let sx,sy;if(d===0){sx=s.a*p*Math.cos(s.p);sy=s.a*p*Math.sin(s.p);}else{const q=2*Math.PI*d,re=(Math.sin(s.p+q*p)-Math.sin(s.p))/q,im=-(Math.cos(s.p+q*p)-Math.cos(s.p))/q;sx=re;sy=im;}
+    x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.arc(cx,cy2,R2,0,7);x.moveTo(cx-R2,cy2);x.lineTo(cx+R2,cy2);x.moveTo(cx,cy2-R2);x.lineTo(cx,cy2+R2);x.stroke();
+    const L=Math.hypot(sx,sy);if(L>.004){const bx=cx+R2*sx,by=cy2-R2*sy;x.strokeStyle=col;x.lineWidth=3;x.beginPath();x.moveTo(cx,cy2);x.lineTo(bx,by);x.stroke();x.fillStyle=col;x.beginPath();x.arc(bx,by,3.5,0,7);x.fill();}
+    x.fillStyle=d===0?C.accent:C.muted;x.font=(d===0?'600 ':'')+'11px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText('長度 '+L.toFixed(2),cx,cy2+R2+4);});
+  const by=h-10;x.fillStyle=C.line;x.fillRect(0,by,w,6);x.fillStyle=C.accent;x.fillRect(0,by,w*p,6);
+  if(t-phAt>.3||t<phAt){phAt=t;const s=phK?PH[phK-1]:null;
+    $('#phOut').innerHTML=!s?'<b>都不讀</b>：每根箭頭都照自己的速度轉，累加之後全部回到 0，讀不到任何資料。':
+      (p<1?`正在累加中……第 ${phK} 個停住了，所以它的累加結果一直變長；其他的累加結果繞一圈後會回到 0。`:
+      `<b>讀到第 ${phK} 個：</b>長度 <b class="mono">${s.a.toFixed(2)}</b>（強度），角度 <b class="mono">${Math.round(s.p*180/Math.PI)}°</b>（相位），跟灰色虛線一模一樣。其他子載波都是 0，不會混進來。`);}
+  x.textAlign='left';}
+
 /* ---------- 迴圈 ---------- */
 const vis=new Map();const io=new IntersectionObserver(es=>es.forEach(e=>vis.set(e.target.id,e.isIntersecting)),{rootMargin:'80px'});
 document.querySelectorAll('canvas').forEach(c=>{vis.set(c.id,true);io.observe(c);});
@@ -1207,6 +1251,7 @@ function frame(ms){const real=Math.min(.05,prev?ms/1000-prev:0);prev=ms/1000;con
   if(vis.get('cvSpread'))drawSpread(t);
   if(vis.get('cvFt'))drawFt();
   if(vis.get('cvOrth'))drawOrth(t);
+  if(vis.get('cvPh'))drawPh(t);
   if(vis.get('cvOfdm'))drawOfdm(t);
   if(vis.get('cvSig'))drawSig(t);
   if(vis.get('cvGi'))drawGi(t);
