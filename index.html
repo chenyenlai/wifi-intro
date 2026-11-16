@@ -98,6 +98,7 @@ dl.gloss dd{margin:0;font-size:14px;color:var(--muted);line-height:1.6}
 .anim .seg button{padding:6px 10px}
 canvas{cursor:pointer}
 body.paused canvas{opacity:.85}
+p.eq{font-family:var(--mono);font-size:14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;max-width:none;overflow-x:auto}
 .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .facts div{border-left:3px solid var(--line);padding-left:10px;font-size:13px;color:var(--muted)}
 .facts b{display:block;font-family:var(--mono);font-size:20px;color:var(--fg);font-variant-numeric:tabular-nums}
@@ -321,13 +322,45 @@ footer{font-size:13px;color:var(--muted)}
   </div>
 
   <div class="step">
-    <h3 class="sub"><span>3</span>零點的位置是固定的</h3>
+    <h3 class="sub"><span>3</span>用傅立葉轉換來看（進階）</h3>
+    <p>載波本身確實只有一個頻率。永遠不停的 cos(2π·f₀·t)，傅立葉轉換之後就是在 f₀ 的一根線。</p>
+    <p>但真正送出去的不是載波本身，而是「載波 × 一個只開 T 秒的窗」：</p>
+    <p class="eq">一個符號 = 振幅 a × 窗（長度 T） × cos(2π·f₀·t + 相位 φ)</p>
+    <p>傅立葉轉換有一個重要性質：<b>時間上相乘，等於頻率上做卷積</b>。</p>
+    <ul class="pts">
+      <li>載波的頻譜：在 f₀ 的一根線。</li>
+      <li>長度 T 的窗（一個方塊），它的頻譜是 sinc 函數：中間一座山，零點每隔 1/T 一個。</li>
+      <li>一根線和任何形狀做卷積，結果就是把那個形狀搬到線的位置。所以符號的頻譜，就是把窗的 sinc 搬到 f₀。</li>
+    </ul>
+    <p>所以四個參數各自管頻譜的一件事：</p>
+    <div class="scroll"><table>
+      <tr><th>時域</th><th>頻譜上的效果</th></tr>
+      <tr><td>頻率 f₀</td><td>山在哪裡（中心位置）</td></tr>
+      <tr><td>時間長度 T</td><td>山有多寬：零點每隔 1/T，主峰寬 2/T。T 越長越窄，高度也越高</td></tr>
+      <tr><td>振幅 a</td><td>整座山等比例變高或變矮，形狀不變</td></tr>
+      <tr><td>相位 φ</td><td>山的大小、形狀都不變，只改變頻譜的「相位」（頻譜其實是複數）</td></tr>
+    </table></div>
+    <p>最後一點很關鍵：振幅和相位沒有改變山的形狀和零點的位置，只改變山頂那個值的大小和角度。接收端讀山頂的複數值，大小就是振幅、角度就是相位，這就是星座圖上的一個點。也因為零點位置只由 T 決定，不管每個子載波帶什麼資料，零點都對得上。</p>
+    <div class="panel">
+      <canvas id="cvFt" style="height:440px" aria-label="三排對照：載波乘上時間窗等於一個符號；右邊是對應的頻譜：一根線卷積 sinc 等於搬到中心頻率的 sinc"></canvas>
+      <div class="row">
+        <label class="ctl" for="ftA"><span>振幅 a：<b id="ftAo"></b></span><input type="range" id="ftA" min="20" max="100" value="80"></label>
+        <label class="ctl" for="ftP"><span>相位 φ：<b id="ftPo"></b></span><input type="range" id="ftP" min="0" max="315" step="45" value="0"></label>
+        <label class="ctl" for="ftT"><span>長度 T：<b id="ftTo"></b></span><input type="range" id="ftT" min="2" max="14" value="5"></label>
+      </div>
+      <div class="cap" id="ftOut"></div>
+      <div class="cap">左邊是時域，右邊是頻域。第二排的 sinc 畫的是真正的值，有正有負；第三排畫的是大小（絕對值）。右下的小圓是山頂那個複數值：箭頭長度是大小，角度是相位。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>4</span>零點的位置是固定的</h3>
     <p>上面的動畫裡，被切短的波，頻譜長成「中間一座山、兩邊越來越小的波紋」。這個形狀有一個很重要的特性：<b>零點剛好每隔「1 ÷ 符號長度」出現一次</b>。</p>
     <p>Wi-Fi 5 以前，一個符號長 3.2 µs，所以零點每隔 1 ÷ 3.2 µs = 312.5 kHz 出現一次。Wi-Fi 就把相鄰子載波的間距也設成剛好 312.5 kHz。這樣一來，每個子載波的高峰，都正好落在其他所有子載波的零點上。</p>
   </div>
 
   <div class="step">
-    <h3 class="sub"><span>4</span>接收端怎麼只讀出一個子載波</h3>
+    <h3 class="sub"><span>5</span>接收端怎麼只讀出一個子載波</h3>
     <p>所有子載波是加在一起送出來的，接收端要把它們分開。做法是：在一個符號的時間裡，把收到的訊號和「想讀的那個子載波的頻率」相乘，再全部加起來。</p>
     <ul class="pts">
       <li><b>頻率相同：</b>兩個波一起上、一起下，相乘永遠是正的，加起來是一個大數字，這就是讀到的資料。</li>
@@ -349,7 +382,7 @@ footer{font-size:13px;color:var(--muted)}
   </div>
 
   <div class="step">
-    <h3 class="sub"><span>5</span>全部排在一起</h3>
+    <h3 class="sub"><span>6</span>全部排在一起</h3>
     <p>把上面幾件事放在一起，就是下面這張圖：每個子載波都是一座山，彼此重疊，但每一座的山頂都對準其他所有子載波的零點。</p>
   </div>
   <div class="panel">
@@ -1108,6 +1141,34 @@ function drawOrth(t){const[x,w,h]=fit($('#cvOrth'));const k=3,m=orM,L=6,R=w-6,W=
   if(p>=1){const msg=m===k?'頻率相同：加起來是 1，這就是讀到的資料。':Number.isInteger(m)?'差整數圈：正負剛好抵消，加起來是 0，不會干擾。':'差的不是整數圈：正負抵消不完，留下 '+S.toFixed(2)+'，會干擾。';$('#orOut').innerHTML='<b>結果：</b>'+msg;}
   else $('#orOut').textContent='從左到右一路相乘再加總中……';}
 
+/* ---------- OFDM：傅立葉轉換 ---------- */
+let ft={a:.8,p:0,T:5};
+function ftUpdate(){ft.a=+$('#ftA').value/100;ft.p=+$('#ftP').value;ft.T=+$('#ftT').value;
+  $('#ftAo').textContent=ft.a.toFixed(1);$('#ftPo').textContent=ft.p+'°';$('#ftTo').textContent=ft.T+' 圈';
+  $('#ftOut').innerHTML=`山頂的值：大小 <b class="mono">${(ft.a*ft.T/2).toFixed(1)}</b>（= a × T ÷ 2），相位 <b class="mono">${ft.p}°</b>。零點間距 1/T，T 是 ${ft.T} 圈時約為中心頻率的 ${(100/ft.T).toFixed(0)}%。改相位時，右邊的山完全不動，只有小圓裡的箭頭轉了。`;}
+['ftA','ftP','ftT'].forEach(id=>$('#'+id).addEventListener('input',ftUpdate));ftUpdate();
+function drawFt(){const[x,w,h]=fit($('#cvFt'));const gap=26,cw=(w-gap)/2,rh=(h-18)/3,R0=cw+gap,f0=1,span=cw<260?15:24,ph=ft.p*Math.PI/180;
+  const sinc=u=>Math.abs(u)<1e-9?1:Math.sin(Math.PI*u)/(Math.PI*u);
+  const tx=px=>(px/cw-.5)*span,win=tt=>Math.abs(tt)<=ft.T/2?1:0;
+  x.fillStyle=C.muted;x.font='600 11px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText('時域（時間）',cw/2,0);x.fillText('頻域（頻率）',R0+cw/2,0);
+  const rows=[['載波：一直響',tt=>ft.a*Math.cos(2*Math.PI*f0*tt+ph),'在 f₀ 的一根線'],['× 窗：只開 T',win,'⊛ 窗的頻譜：sinc'],['= 一個符號',tt=>win(tt)*ft.a*Math.cos(2*Math.PI*f0*tt+ph),'= 搬到 f₀ 的 sinc']];
+  rows.forEach(([lt,fn,lf],r)=>{const y0=18+r*rh,cy=y0+rh*.55,A=rh*.36;
+    x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(0,cy+.5);x.lineTo(cw,cy+.5);x.moveTo(R0,y0+rh-14.5);x.lineTo(w,y0+rh-14.5);x.stroke();
+    x.beginPath();for(let px=0;px<=cw;px+=1){const y=cy-A*fn(tx(px));px?x.lineTo(px,y):x.moveTo(px,y);}x.strokeStyle=r===1?C.b24:C.accent;x.lineWidth=1.8;x.stroke();
+    x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText(lt,2,y0);x.fillText(lf,R0+2,y0);
+    const base=y0+rh-15,FH=rh-36,FS=cw/2,fx=v=>R0+cw/2+v*FS/1.2;
+    x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText(r===1?'0':'f₀',fx(0),base+2);
+    if(r===0){x.strokeStyle=C.accent;x.lineWidth=3;x.beginPath();x.moveTo(fx(0),base);x.lineTo(fx(0),base-FH*ft.a);x.stroke();x.fillStyle=C.accent;x.beginPath();x.moveTo(fx(0),base-FH*ft.a-7);x.lineTo(fx(0)-5,base-FH*ft.a+1);x.lineTo(fx(0)+5,base-FH*ft.a+1);x.fill();}
+    else{const zero=r===1?base-FH*.35:base,sc=r===1?FH*.62:FH*ft.a;
+      if(r===1){x.strokeStyle=C.line;x.beginPath();x.moveTo(R0,zero+.5);x.lineTo(w,zero+.5);x.stroke();}
+      x.beginPath();for(let px=0;px<=cw;px+=1){const v=(px-cw/2)/FS*1.2,s2=sinc(v*ft.T),y=zero-sc*(r===1?s2:Math.abs(s2));px?x.lineTo(R0+px,y):x.moveTo(R0+px,y);}
+      x.strokeStyle=r===1?C.b24:C.accent;x.lineWidth=1.8;x.stroke();
+      x.fillStyle=C.panel;x.strokeStyle=C.fg;x.lineWidth=1.1;for(let k=1;k<12;k++)[-k,k].forEach(q=>{const v=q/ft.T;if(Math.abs(v)<1.18){x.beginPath();x.arc(fx(v),zero,2.6,0,7);x.fill();x.stroke();}});}
+  });
+  const pr=Math.min(24,rh*.22),pcx=w-pr-6,pcy=18+2*rh+pr+16;x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.arc(pcx,pcy,pr,0,7);x.moveTo(pcx-pr,pcy);x.lineTo(pcx+pr,pcy);x.moveTo(pcx,pcy-pr);x.lineTo(pcx,pcy+pr);x.stroke();
+  const L=pr*ft.a;x.strokeStyle=C.fg;x.lineWidth=2;x.beginPath();x.moveTo(pcx,pcy);x.lineTo(pcx+L*Math.cos(ph),pcy-L*Math.sin(ph));x.stroke();x.fillStyle=C.fg;x.beginPath();x.arc(pcx+L*Math.cos(ph),pcy-L*Math.sin(ph),3,0,7);x.fill();
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText('山頂',pcx,pcy+pr+3);x.textAlign='left';}
+
 /* ---------- 迴圈 ---------- */
 const vis=new Map();const io=new IntersectionObserver(es=>es.forEach(e=>vis.set(e.target.id,e.isIntersecting)),{rootMargin:'80px'});
 document.querySelectorAll('canvas').forEach(c=>{vis.set(c.id,true);io.observe(c);});
@@ -1132,6 +1193,7 @@ function frame(ms){const real=Math.min(.05,prev?ms/1000-prev:0);prev=ms/1000;con
   if(vis.get('cvCh'))drawCh(reduce?0:t);
   if(vis.get('cvQam'))mcsText(drawQam(),ms);
   if(vis.get('cvSpread'))drawSpread(t);
+  if(vis.get('cvFt'))drawFt();
   if(vis.get('cvOrth'))drawOrth(t);
   if(vis.get('cvOfdm'))drawOfdm(t);
   if(vis.get('cvSig'))drawSig(t);
