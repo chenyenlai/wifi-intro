@@ -70,6 +70,21 @@ select{font:inherit;font-size:14px;padding:5px 8px;border:1px solid var(--line);
 .slab div{flex:1;min-width:0;background:var(--b6);color:var(--panel);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;animation:pop .35s ease}
 @keyframes pop{from{transform:scaleY(.6);opacity:.4}to{transform:none;opacity:1}}
 .bar{display:flex;gap:2px;height:28px;border-radius:6px;overflow:hidden}
+a{color:var(--accent)}
+.step{display:flex;flex-direction:column;gap:12px}
+h3.sub{font-family:var(--display);font-size:20px;line-height:1.3;display:flex;align-items:center;gap:10px;text-wrap:balance}
+h3.sub span{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--panel);font-size:15px;display:grid;place-items:center}
+ul.pts{margin:0;padding-left:1.3em;max-width:65ch;display:flex;flex-direction:column;gap:4px}
+.formula{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.formula div{flex:1 1 150px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--muted)}
+.formula b{display:block;font-family:var(--mono);font-size:22px;color:var(--fg);font-variant-numeric:tabular-nums}
+.formula small{display:block;font-size:12px;margin-top:2px}
+.formula i{font-style:normal;font-size:20px;color:var(--muted)}
+ul.vids{margin:0;padding-left:1.3em;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 20px}
+dl.gloss{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 24px}
+dl.gloss div{min-width:0}
+dl.gloss dt{font-weight:600}
+dl.gloss dd{margin:0;font-size:14px;color:var(--muted);line-height:1.6}
 .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .facts div{border-left:3px solid var(--line);padding-left:10px;font-size:13px;color:var(--muted)}
 .facts b{display:block;font-family:var(--mono);font-size:20px;color:var(--fg);font-variant-numeric:tabular-nums}
@@ -97,10 +112,114 @@ footer{font-size:13px;color:var(--muted)}
 <header>
   <h1>Wi-Fi 技術入門</h1>
   <p>Wi-Fi 的速度由幾件事決定：用哪個頻段、頻道有多寬、訊號多乾淨、每個子載波塞幾個 bit、用幾根天線，以及頻道怎麼分給多台裝置。下面照這個順序介紹，每個主題都有一個可以動手玩的動畫。</p>
+  <p>如果你不熟無線電，先從<a href="#basics">基礎觀念</a>看起；遇到不懂的詞，可以查最後的<a href="#glossary">名詞小辭典</a>。</p>
   <nav aria-label="章節">
-    <a href="#band">頻段</a><a href="#channel">頻道與頻寬</a><a href="#signal">訊號與 SNR</a><a href="#ofdm">OFDM</a><a href="#gi">保護間隔</a><a href="#mcs">MCS</a><a href="#mimo">MIMO</a><a href="#bf">波束成形</a><a href="#csma">CSMA/CA</a><a href="#ofdma">OFDMA</a><a href="#mlo">MLO</a><a href="#real">實際網速</a><a href="#gen">世代比較</a>
+    <a href="#basics">基礎觀念</a><a href="#band">頻段</a><a href="#channel">頻道與頻寬</a><a href="#signal">訊號與 SNR</a><a href="#ofdm">OFDM</a><a href="#gi">保護間隔</a><a href="#mcs">MCS</a><a href="#mimo">MIMO</a><a href="#bf">波束成形</a><a href="#csma">CSMA/CA</a><a href="#ofdma">OFDMA</a><a href="#mlo">MLO</a><a href="#real">實際網速</a><a href="#gen">世代比較</a><a href="#glossary">名詞小辭典</a>
   </nav>
 </header>
+
+<section id="basics">
+  <h2><small>Basics</small>基礎觀念：從電波開始</h2>
+  <p>後面的章節會一直出現「載波」「調變」「符號」「多路徑」這些詞。這一節從最基本的電波講起，分成六個小步驟，每一步都有動畫。已經懂的可以直接跳到<a href="#band">頻段</a>。</p>
+
+  <div class="step">
+    <h3 class="sub"><span>1</span>電波：一直上下振動的波</h3>
+    <p>Wi-Fi 用的是無線電波，和收音機、手機訊號是同一類東西，只是頻率不同。電波可以想成一條一直上下振動、往前傳的波浪，有三個基本特徵：</p>
+    <ul class="pts">
+      <li><b>振幅</b>：振動有多大，也就是訊號有多強。</li>
+      <li><b>頻率</b>：每秒振動幾次，單位是赫茲（Hz）。2.4 GHz 就是每秒振動 24 億次。</li>
+      <li><b>波長</b>：振動一次，波往前走的距離。所有電波的速度都一樣（光速），所以頻率越高，波長越短。</li>
+    </ul>
+    <div class="panel">
+      <canvas id="cvB1" style="height:200px" aria-label="一條移動的正弦波，標出振幅與波長，一個點在固定位置上下振動"></canvas>
+      <div class="row">
+        <label class="ctl" for="b1A"><span>振幅：<b id="b1Ao"></b></span><input type="range" id="b1A" min="20" max="100" value="70"></label>
+        <label class="ctl" for="b1F"><span>頻率：<b id="b1Fo"></b></span><input type="range" id="b1F" min="1" max="8" value="3"></label>
+      </div>
+      <div class="cap">動畫大約放慢了幾十億倍。看紅點：它停在原地上下振動，每秒振動的次數就是頻率。把頻率調高，波長會變短，但波往前傳的速度不變。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>2</span>載波：負責「載運」資料的波</h3>
+    <p>一個一直重複、一模一樣的波，本身沒有帶任何資訊，就像一直響同一個音，聽再久也聽不出內容。要傳資料，就要在這個波上做記號，例如讓它一下大、一下小。</p>
+    <p>這個被拿來做記號、頻率固定的波，就叫<b>載波</b>，因為它負責把資料「載」到對方那裡。收音機轉到 98.1 MHz，就是在收那個頻率的載波。Wi-Fi 選的頻道，決定了載波的頻率。</p>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>3</span>調變：在載波上做記號</h3>
+    <p>在載波上做記號的方法叫<b>調變</b>。能改的東西有兩個：</p>
+    <ul class="pts">
+      <li><b>振幅</b>：波的大小。</li>
+      <li><b>相位</b>：波形往前或往後挪了多少。挪半個波（180°），整個波形就上下顛倒。</li>
+    </ul>
+    <p>能分辨的狀態越多，一次就能表示越多 bit。Wi-Fi 把振幅和相位一起改，所以可以有很多種狀態。點下面的按鈕比較看看。</p>
+    <div class="panel">
+      <div class="seg" id="b2Seg" role="group" aria-label="調變方式">
+        <button data-m="ask" aria-pressed="false">改振幅</button><button data-m="bpsk" aria-pressed="true">改相位（2 種）</button><button data-m="qpsk" aria-pressed="false">改相位（4 種）</button><button data-m="qam16" aria-pressed="false">振幅 + 相位（16 種）</button>
+      </div>
+      <canvas id="cvB2" style="height:230px" aria-label="被調變的載波，切成一段一段的符號，每段上方標出它代表的 bit；右邊是星座圖"></canvas>
+      <div class="cap" id="b2Out"></div>
+      <div class="cap">虛線把波切成一段一段，每一段就是一個符號（下一步會解釋）。上方的數字是那一段代表的 bit。中間淡藍色那一段是接收端正在讀的符號，右邊的星座圖會標出它是哪一個點。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>4</span>符號：一小段固定長度的波</h3>
+    <p>調變的時候，時間會被切成一段一段固定的長度。在每一段裡，載波的振幅和相位保持不變，這一小段波就叫一個<b>符號</b>（symbol）。接收端每收到一個符號，就判斷它是哪一種狀態，再換回對應的 bit。</p>
+    <p>可以想成用燈號傳訊息：每一秒換一次燈的顏色，每一次亮的那個顏色就是一個符號。如果只有紅、綠兩種顏色，一個符號只能表示 1 個 bit（0 或 1）；如果有 4 種顏色，一個符號就能表示 2 個 bit（00、01、10、11）。後面 <a href="#mcs">MCS</a> 那一節的星座圖，就是把所有可能的狀態畫成點。</p>
+    <div class="panel">
+      <h3>速度就是這三個數字相乘</h3>
+      <div class="formula">
+        <div><b>10 bit</b>每個符號帶幾個 bit<small>1024-QAM 有 1024 種狀態 = 10 bit</small></div>
+        <i>×</i>
+        <div><b>73,529</b>每秒傳幾個符號<small>每個符號 12.8 µs，加上 0.8 µs 保護間隔</small></div>
+        <i>×</i>
+        <div><b>980</b>同時有幾個子載波<small>80 MHz 頻道（第 5 步會解釋）</small></div>
+      </div>
+      <div class="cap">10 × 73,529 × 980 ≈ 720 Mbps。其中有一部分 bit 是用來除錯的備份（編碼率 5/6 表示每 6 個 bit 有 5 個是真正的資料），所以實際大約 600 Mbps，這就是 1 個空間串流、MCS 11 的速率。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>5</span>子載波：很多載波同時傳</h3>
+    <p>一個載波一次只能送一個符號，速度有限。Wi-Fi 的做法是在同一個頻道裡，同時放很多個頻率略有不同的載波，叫<b>子載波</b>，每一個各自傳自己的符號。</p>
+    <p>這些波會加在一起，變成一個看起來很亂的電波送出去。接收端再用數學（傅立葉轉換）把它拆回一個一個子載波，就像耳朵可以從和弦裡聽出每一個音。這就是後面 <a href="#ofdm">OFDM</a> 那一節的內容。</p>
+    <div class="panel">
+      <canvas id="cvB3" style="height:330px" aria-label="三個不同頻率的子載波，各自被調變，最下面是三個加起來的電波"></canvas>
+      <div class="cap">上面三條是頻率不同的子載波，每一條在每個符號裡各自改變振幅和相位。最下面是三條加起來、實際從天線送出去的電波。真正的 Wi-Fi 會同時用幾百到幾千個子載波。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>6</span>多路徑：同一個訊號走好幾條路</h3>
+    <p>電波碰到牆壁、天花板、家具會反射。所以手機收到的，除了從路由器直接過來的訊號，還有繞了一圈、晚一點才到的反射訊號，這叫<b>多路徑</b>。就像在山谷裡喊話，會聽到自己的回音。</p>
+    <p>如果回音拖得太長，就會和下一句話疊在一起，聽不清楚。在 Wi-Fi 裡，「下一句話」就是下一個符號。所以每個符號前面會先留一小段時間，讓上一個符號的回音在這段時間裡結束，這段時間叫<b>保護間隔</b>（guard interval）。時間怎麼對上，在後面<a href="#gi">保護間隔</a>那一節有動畫。</p>
+    <div class="panel">
+      <canvas id="cvB4" style="height:320px" aria-label="房間俯視圖：路由器發出訊號，一條直接到手機，兩條經牆壁反射；下方時間軸顯示到達的先後與強弱"></canvas>
+      <ul class="legend">
+        <li><span class="sw" style="background:var(--accent)"></span>直接到達</li>
+        <li><span class="sw" style="background:var(--b24)"></span>經上面的牆反射</li>
+        <li><span class="sw" style="background:var(--b6)"></span>經下面的牆反射</li>
+      </ul>
+      <div class="cap">上面是房間的俯視圖，下面是手機收到訊號的時間。直接路徑最短，最先到、也最強；反射路徑比較長，所以晚到，而且每次反射都會損失能量。電波每秒走 30 萬公里，多走 10 公尺大約只晚 0.033 µs，所以一般室內的回音都比 0.8 µs 的保護間隔短很多。</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>想看影片</h3>
+    <div class="cap">下面是 YouTube 的搜尋連結，會列出很多相關的教學影片，可以挑喜歡的看。</div>
+    <ul class="vids">
+      <li><a href="https://www.youtube.com/results?search_query=%E9%9B%BB%E7%A3%81%E6%B3%A2%20%E9%A0%BB%E7%8E%87%20%E6%B3%A2%E9%95%B7%20%E6%8C%AF%E5%B9%85%20%E4%BB%8B%E7%B4%B9" target="_blank" rel="noopener">電波的頻率、振幅、波長</a></li>
+      <li><a href="https://www.youtube.com/results?search_query=%E8%AA%BF%E8%AE%8A%20%E5%8E%9F%E7%90%86%20AM%20FM%20%E5%8B%95%E7%95%AB" target="_blank" rel="noopener">調變是什麼（AM、FM）</a></li>
+      <li><a href="https://www.youtube.com/results?search_query=QAM%20%E8%AA%BF%E8%AE%8A%20%E6%98%9F%E5%BA%A7%E5%9C%96%20%E5%8E%9F%E7%90%86" target="_blank" rel="noopener">QAM 調變與星座圖</a></li>
+      <li><a href="https://www.youtube.com/results?search_query=OFDM%20%E5%8E%9F%E7%90%86%20%E5%8B%95%E7%95%AB" target="_blank" rel="noopener">OFDM 原理</a></li>
+      <li><a href="https://www.youtube.com/results?search_query=%E5%A4%9A%E8%B7%AF%E5%BE%91%20multipath%20%E7%84%A1%E7%B7%9A%E9%80%9A%E8%A8%8A" target="_blank" rel="noopener">多路徑與回音</a></li>
+      <li><a href="https://www.youtube.com/results?search_query=how%20does%20wifi%20work%20animation" target="_blank" rel="noopener">英文：Wi-Fi 怎麼運作</a></li>
+      <li><a href="https://www.youtube.com/results?search_query=OFDM%20explained" target="_blank" rel="noopener">英文：OFDM 圖解</a></li>
+    </ul>
+  </div>
+</section>
 
 <section id="band">
   <h2><small>Frequency band</small>頻段：2.4、5、6 GHz</h2>
@@ -166,6 +285,7 @@ footer{font-size:13px;color:var(--muted)}
 
 <section id="ofdm">
   <h2><small>Orthogonal frequency-division multiplexing</small>OFDM：把頻道切成很多子載波</h2>
+  <p class="cap">不清楚什麼是載波、子載波？先看<a href="#basics">基礎觀念</a>。</p>
   <p>Wi-Fi 不是用一個很寬的載波傳資料，而是把頻道切成很多窄的子載波，每個子載波各自傳一小部分資料，全部同時送出。</p>
   <p>下圖的每一條曲線是一個子載波的頻譜，也就是它的能量在頻率上的分布：中間一個高峰，兩旁有越來越小的波紋。</p>
   <p>傳統的分頻做法，載波之間要留空隙才不會互相干擾，很浪費頻譜。OFDM 讓子載波互相重疊、排得更密。只要間距選得剛好，每個子載波的高峰就會落在其他所有子載波的零點上。接收端只在高峰的位置讀取，讀到的就只有那一個子載波的資料，這就是「正交」。</p>
@@ -187,6 +307,7 @@ footer{font-size:13px;color:var(--muted)}
 
 <section id="gi">
   <h2><small>Guard interval &amp; multipath</small>保護間隔與多路徑</h2>
+  <p class="cap">不清楚什麼是符號、多路徑？先看<a href="#basics">基礎觀念</a>。</p>
   <p>電波會被牆壁、地板反射，所以同一個符號會沿著不同的路徑、分好幾次到達接收端，這叫多路徑。反射的訊號比較晚到，如果拖到下一個符號的時間，前後兩個符號就會混在一起。</p>
   <p>解法是在每個符號前面留一小段保護間隔（GI）。只要反射的延遲比保護間隔短，晚到的部分就落在這段緩衝裡，不會影響資料。保護間隔越長越安全，但這段時間不能傳資料，速度會稍微變慢。</p>
   <div class="panel">
@@ -209,6 +330,7 @@ footer{font-size:13px;color:var(--muted)}
 
 <section id="mcs">
   <h2><small>Modulation and coding scheme</small>MCS：一個符號裝幾個 bit</h2>
+  <p class="cap">不清楚什麼是調變、符號？先看<a href="#basics">基礎觀念</a>。</p>
   <p>MCS 是一張編號表，每個編號代表一種「調變方式 + 編碼率」的組合。調變的點越多（例如 1024-QAM），每個符號帶的 bit 越多，但點和點靠得越近，需要越乾淨的訊號。路由器會依訊號品質自動選 MCS。</p>
   <p><b>星座圖怎麼看：</b>無線電波可以調整的東西有兩個，振幅（強弱）和相位（波形的時間差）。圖上每個點代表一種「振幅 + 相位」的組合：離原點越遠，振幅越大；和橫軸的夾角就是相位。橫軸 I（同相）和縱軸 Q（正交）是把這個組合拆成兩個互相垂直的分量，就像用 x、y 座標表示一個方向和距離。兩軸沒有實體單位，圖上是把平均訊號功率當成 1 的相對值。</p>
   <p>每個子載波在每個符號時間送出其中一個點，接收端看收到的訊號最靠近哪個點，就還原出對應的 bit。64-QAM 有 64 個點，所以一個點可以代表 6 個 bit。</p>
@@ -361,6 +483,40 @@ footer{font-size:13px;color:var(--muted)}
       </table>
     </div>
     <div class="cap">理論最高速率是最大頻寬、最高 MCS、8 個空間串流的組合，一般手機只有 2 個串流。Wi-Fi 7 常見的「46 Gbps」是以 16 個串流計算的宣傳數字。</div>
+  </div>
+</section>
+
+<section id="glossary">
+  <h2><small>Glossary</small>名詞小辭典</h2>
+  <div class="panel">
+    <dl class="gloss">
+      <div><dt>bit</dt><dd>電腦資料最小的單位，只有 0 或 1 兩種值。</dd></div>
+      <div><dt>赫茲（Hz）、GHz</dt><dd>每秒振動幾次。1 GHz 是每秒 10 億次，2.4 GHz 是每秒 24 億次。</dd></div>
+      <div><dt>振幅</dt><dd>波振動的大小，代表訊號的強弱。</dd></div>
+      <div><dt>頻率</dt><dd>每秒振動的次數，單位是赫茲。</dd></div>
+      <div><dt>波長</dt><dd>波振動一次往前走的距離。頻率越高，波長越短。</dd></div>
+      <div><dt>相位</dt><dd>波形往前或往後挪了多少，用角度表示。挪 180° 就是上下顛倒。</dd></div>
+      <div><dt>載波</dt><dd>頻率固定、用來在上面做記號傳資料的波。</dd></div>
+      <div><dt>調變</dt><dd>在載波上做記號的方法：改變振幅、相位，或兩個一起改。</dd></div>
+      <div><dt>符號（symbol）</dt><dd>一小段固定長度的波，在這段時間裡振幅和相位不變，代表幾個 bit。</dd></div>
+      <div><dt>子載波</dt><dd>同一個頻道裡同時使用的許多個載波，頻率各差一點，各自傳資料。</dd></div>
+      <div><dt>OFDM</dt><dd>把頻道切成很多互相重疊、但不干擾的子載波，一起傳資料的技術。</dd></div>
+      <div><dt>OFDMA</dt><dd>把 OFDM 的子載波分組，分給不同的裝置同時使用。</dd></div>
+      <div><dt>頻段</dt><dd>一大段頻率範圍，Wi-Fi 用 2.4、5、6 GHz 三個頻段。</dd></div>
+      <div><dt>頻道</dt><dd>從頻段裡切出來的一小段頻率，路由器選其中一個來用。</dd></div>
+      <div><dt>頻寬</dt><dd>一個頻道有多寬，例如 20、80、160 MHz。越寬，能放越多子載波。</dd></div>
+      <div><dt>dB</dt><dd>比較兩個數值差幾倍的單位。每 +3 dB 約是 2 倍，每 +10 dB 是 10 倍。</dd></div>
+      <div><dt>dBm</dt><dd>以 1 毫瓦為基準的功率單位。Wi-Fi 訊號通常是 −30 到 −90 dBm，越接近 0 越強。</dd></div>
+      <div><dt>SNR</dt><dd>訊號比雜訊強多少，單位是 dB。越高代表訊號越乾淨，能用越高的 MCS。</dd></div>
+      <div><dt>星座圖</dt><dd>把一種調變所有可能的「振幅 + 相位」狀態畫成點的圖。</dd></div>
+      <div><dt>QAM</dt><dd>同時改變振幅和相位的調變方式。16-QAM 有 16 種狀態，每個符號 4 bit。</dd></div>
+      <div><dt>編碼率</dt><dd>送出的 bit 裡有多少是真正的資料，其餘是除錯用的備份。5/6 表示每 6 個有 5 個是資料。</dd></div>
+      <div><dt>MCS</dt><dd>「調變方式 + 編碼率」組合的編號，數字越大越快，但需要越好的訊號。</dd></div>
+      <div><dt>多路徑</dt><dd>同一個訊號經過不同的路徑（直接、反射）先後到達接收端。</dd></div>
+      <div><dt>保護間隔（GI）</dt><dd>每個符號前面留的一小段時間，讓上一個符號的反射在這段時間裡結束。</dd></div>
+      <div><dt>空間串流</dt><dd>用多根天線同時傳送的獨立資料路數。2 個串流約是 1 個的 2 倍速。</dd></div>
+      <div><dt>Mbps、Gbps</dt><dd>每秒傳幾百萬、幾十億個 bit。1 Gbps = 1000 Mbps。</dd></div>
+    </dl>
   </div>
 </section>
 
@@ -629,11 +785,91 @@ function rlUpdate(){const n=+$('#rlN').value,link=rate(11,80,2,.8);$('#rlNo').te
   $('#rlOut').innerHTML=`連線速率 <b class="mono">${fmt(link)}</b>（2 串流、80 MHz、MCS 11）時，實際大約 <b class="mono">${fmt(link*.62)}</b>。`+(n>1?`${n} 台裝置平分時間，每台大約 <b class="mono">${fmt(link*.62/n)}</b>。`:'');}
 $('#rlN').addEventListener('input',rlUpdate);rlUpdate();
 
+/* ---------- 基礎 1：電波 ---------- */
+let b1={a:.7,f:3};
+function b1Update(){b1.a=+$('#b1A').value/100;b1.f=+$('#b1F').value;$('#b1Ao').textContent=Math.round(b1.a*100)+'%';$('#b1Fo').textContent='畫面上 '+b1.f+' 個波';}
+['b1A','b1F'].forEach(id=>$('#'+id).addEventListener('input',b1Update));b1Update();
+function drawB1(t){const[x,w,h]=fit($('#cvB1'));const mid=h/2+6,A=b1.a*(h/2-30),lam=w/(b1.f+.3),sp=reduce?0:.32*b1.f,ph=px=>2*Math.PI*(px/lam-t*sp);
+  x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(0,mid+.5);x.lineTo(w,mid+.5);x.stroke();
+  x.beginPath();for(let px=0;px<=w;px+=1.5){const y=mid-A*Math.sin(ph(px));px?x.lineTo(px,y):x.moveTo(px,y);}x.strokeStyle=C.accent;x.lineWidth=2.4;x.stroke();
+  const shift=((t*sp)%1+1)%1;let c1=lam*(.25+shift);while(c1<lam*.15)c1+=lam;
+  if(c1+lam<w-4){const y=mid-A-12;x.strokeStyle=C.fg;x.lineWidth=1.2;x.beginPath();x.moveTo(c1,y);x.lineTo(c1+lam,y);x.moveTo(c1,y-5);x.lineTo(c1,y+5);x.moveTo(c1+lam,y-5);x.lineTo(c1+lam,y+5);x.stroke();
+    x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='center';x.textBaseline='bottom';x.fillText('波長',c1+lam/2,y-3);
+    x.setLineDash([3,3]);x.beginPath();x.moveTo(c1,mid);x.lineTo(c1,mid-A);x.stroke();x.setLineDash([]);
+    x.textAlign='left';x.textBaseline='middle';x.fillText('振幅',c1+5,mid-A/2);}
+  const dx=w*.12,dy=mid-A*Math.sin(ph(dx));x.fillStyle=C.bad;x.beginPath();x.arc(dx,dy,6,0,7);x.fill();
+  x.strokeStyle=C.bad;x.globalAlpha=.4;x.lineWidth=1;x.beginPath();x.moveTo(dx,mid-A);x.lineTo(dx,mid+A);x.stroke();x.globalAlpha=1;
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='right';x.textBaseline='top';x.fillText('前進方向 →',w-4,4);x.textAlign='left';}
+
+/* ---------- 基礎 3：調變 ---------- */
+const q16=[];for(const a of [-3,-1,1,3])for(const b of [3,1,-1,-3])q16.push([a/3,b/3]);
+const B2M={ask:{pts:[[.3,0],[1,0]],note:'只改振幅：大代表 1，小代表 0。每個符號只有 2 種狀態，所以帶 1 個 bit。缺點是雜訊很容易讓大小看起來差不多，所以 Wi-Fi 不單獨用這種。'},
+  bpsk:{pts:[[1,0],[-1,0]],note:'振幅不變，只改相位：0 是波形正常，1 是整個上下顛倒（相位差 180°）。每個符號 1 個 bit。這就是 MCS 0 的 BPSK，最慢但最不怕雜訊。'},
+  qpsk:{pts:[[.71,-.71],[-.71,-.71],[-.71,.71],[.71,.71]],note:'相位有 4 種，每種差 90°（四分之一個波）。4 種狀態 = 每個符號 2 個 bit。這是 MCS 1、2 的 QPSK。'},
+  qam16:{pts:q16,note:'振幅和相位一起改，共 16 種組合 = 每個符號 4 個 bit。這是 MCS 3、4 的 16-QAM。狀態越多，彼此越接近，越需要乾淨的訊號；Wi-Fi 7 最多到 4096 種（12 bit）。'}};
+let b2mode='bpsk';const symMap=new Map();
+function symAt(k,i,n){const key=k+':'+i;if(!symMap.has(key)){if(symMap.size>3000)symMap.clear();symMap.set(key,Math.floor(Math.random()*n));}return symMap.get(key);}
+function b2Set(m){b2mode=m;$('#b2Out').innerHTML=B2M[m].note;}
+seg($('#b2Seg'),b=>b2Set(b.dataset.m));b2Set('bpsk');
+function drawB2(t){const[x,w,h]=fit($('#cvB2'));const M=B2M[b2mode],n=M.pts.length,nb=Math.log2(n),mx=Math.max(...M.pts.map(p=>Math.hypot(p[0],p[1])));
+  const cs=w>=520?130:Math.min(110,w*.3),ww=w-cs-14,top=30,mid=top+(h-top-22)/2,A=(h-top-34)/2,Sw=ww/3.3,off=(reduce?.5:t*.4)*Sw,cyc=3,readX=ww/2,ri=Math.floor((off+readX)/Sw);
+  x.save();x.beginPath();x.rect(0,0,ww,h);x.clip();
+  const i0=Math.floor(off/Sw)-1,i1=Math.floor((off+ww)/Sw)+1;
+  for(let i=i0;i<=i1;i++){const xs=i*Sw-off;if(i===ri){x.fillStyle=C.accent;x.globalAlpha=.1;x.fillRect(xs,top-4,Sw,h-top);x.globalAlpha=1;}
+    x.setLineDash([4,4]);x.strokeStyle=C.muted;x.lineWidth=1;x.beginPath();x.moveTo(xs,top-4);x.lineTo(xs,h-18);x.stroke();x.setLineDash([]);
+    x.fillStyle=i===ri?C.accent:C.fg;x.font='600 14px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText(symAt(b2mode,i,n).toString(2).padStart(nb,'0'),xs+Sw/2,4);}
+  x.strokeStyle=C.line;x.beginPath();x.moveTo(0,mid+.5);x.lineTo(ww,mid+.5);x.stroke();
+  x.beginPath();for(let px=0;px<=ww;px+=1){const g=(px+off)/Sw,p=M.pts[symAt(b2mode,Math.floor(g),n)],a=2*Math.PI*cyc*g,y=mid-A*(p[0]*Math.cos(a)-p[1]*Math.sin(a))/mx;px?x.lineTo(px,y):x.moveTo(px,y);}
+  x.strokeStyle=C.accent;x.lineWidth=2.2;x.stroke();x.restore();
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='bottom';x.fillText('接收端正在讀這個符號',readX,h-2);
+  const cx=ww+14+cs/2,cy=mid,R=cs/2-12;x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(cx-R-6,cy);x.lineTo(cx+R+6,cy);x.moveTo(cx,cy-R-6);x.lineTo(cx,cy+R+6);x.stroke();
+  x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textBaseline='bottom';x.fillText('星座圖',cx,cy-R-10);
+  const cur=symAt(b2mode,ri,n);M.pts.forEach((p,i)=>{const px=cx+p[0]/mx*R,py=cy+p[1]/mx*R;x.fillStyle=i===cur?C.accent:C.muted;x.beginPath();x.arc(px,py,i===cur?6:n>4?2.5:3.5,0,7);x.fill();
+    if(n<=4){x.fillStyle=i===cur?C.accent:C.muted;x.font=(i===cur?'600 ':'')+'11px '+FONT;x.textBaseline=p[1]<=0?'bottom':'top';x.fillText(i.toString(2).padStart(nb,'0'),px,py+(p[1]<=0?-7:7));}});
+  x.textAlign='left';}
+
+/* ---------- 基礎 5：子載波 ---------- */
+function drawB3(t){const[x,w,h]=fit($('#cvB3'));const Sw=w/2.6,off=(reduce?.5:t*.3)*Sw,qp=B2M.qpsk.pts,sub=[[2,C.b5,'子載波 1（頻率低）'],[3,C.b6,'子載波 2'],[4,C.b24,'子載波 3（頻率高）']],rh=(h*.56)/3,sumTop=h*.6,sumMid=sumTop+(h-sumTop)/2+6,sumA=(h-sumTop)/2-14;
+  const i0=Math.floor(off/Sw),i1=Math.floor((off+w)/Sw)+1;
+  for(let i=i0;i<=i1;i++){const xs=i*Sw-off;x.setLineDash([4,4]);x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(xs,0);x.lineTo(xs,h);x.stroke();x.setLineDash([]);}
+  const val=(k,px)=>{const g=(px+off)/Sw,p=qp[symAt('sc'+k,Math.floor(g),4)],a=2*Math.PI*sub[k][0]*g;return p[0]*Math.cos(a)-p[1]*Math.sin(a);};
+  sub.forEach((S,k)=>{const cy=rh*k+rh/2+8,A=rh/2-12;x.beginPath();for(let px=0;px<=w;px+=1.5){const y=cy-A*val(k,px);px?x.lineTo(px,y):x.moveTo(px,y);}x.strokeStyle=S[1];x.lineWidth=1.8;x.stroke();
+    x.fillStyle=C.panel;x.fillRect(0,rh*k,x.measureText(S[2]).width+90,15);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText(S[2],2,rh*k+1);});
+  x.fillStyle=C.muted;x.font='18px '+FONT;x.textAlign='center';x.textBaseline='middle';x.fillText('＋',w/2,sumTop-4);
+  x.beginPath();for(let px=0;px<=w;px+=1.5){const y=sumMid-sumA*(val(0,px)+val(1,px)+val(2,px))/2.4;px?x.lineTo(px,y):x.moveTo(px,y);}x.strokeStyle=C.accent;x.lineWidth=2.4;x.stroke();
+  x.fillStyle=C.panel;x.fillRect(0,sumTop+4,250,16);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText('三個加起來：實際送出去的電波',2,sumTop+5);}
+
+/* ---------- 基礎 6：多路徑 ---------- */
+function drawB4(t){const[x,w,h]=fit($('#cvB4'));const wt=16,wb=h*.56,R=[56,wt+(wb-wt)*.55],P=[w-56,wt+(wb-wt)*.55];
+  const refl=yw=>{const Py=2*yw-P[1],s=(yw-R[1])/(Py-R[1]);return[R[0]+s*(P[0]-R[0]),yw];};
+  const paths=[[R,P],[R,refl(wt),P],[R,refl(wb),P]],cols=[C.accent,C.b24,C.b6],gain=[1,.6,.42],names=['直接','上牆反射','下牆反射'];
+  const len=pp=>{let L=0;for(let i=1;i<pp.length;i++)L+=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);return L;};
+  const L=paths.map(len),v=L[0]/1.3,T=L[2]/v+1.8,tau=reduce?L[2]/v+.4:t%T;
+  x.fillStyle=C.muted;[wt,wb].forEach(y=>{x.fillRect(16,y-3,w-32,6);});
+  x.font='11px '+FONT;x.textAlign='center';x.textBaseline='bottom';x.fillText('牆',w/2,wt-4>10?wt-4:wt+18);x.textBaseline='top';x.fillText('牆',w/2,wb+5);
+  paths.forEach((pp,k)=>{x.strokeStyle=cols[k];x.globalAlpha=.3;x.lineWidth=k?1.5:2;x.beginPath();pp.forEach((q,i)=>i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]));x.stroke();x.globalAlpha=1;
+    let d=v*tau;if(d<L[k]){for(let i=1;i<pp.length;i++){const sl=Math.hypot(pp[i][0]-pp[i-1][0],pp[i][1]-pp[i-1][1]);if(d<=sl){const f=d/sl;x.fillStyle=cols[k];x.beginPath();x.arc(pp[i-1][0]+(pp[i][0]-pp[i-1][0])*f,pp[i-1][1]+(pp[i][1]-pp[i-1][1])*f,6,0,7);x.fill();break;}d-=sl;}}});
+  x.fillStyle=C.fg;x.fillRect(R[0]-12,R[1]-16,10,32);for(let i=0;i<3;i++)x.fillRect(R[0]-2,R[1]-11+i*10,7,2);
+  x.strokeStyle=C.fg;x.lineWidth=2;x.strokeRect(P[0]-6,P[1]-13,14,26);
+  x.font='600 12px '+FONT;x.textBaseline='top';x.textAlign='center';x.fillText('路由器',R[0]-6,R[1]+20);x.fillText('手機',P[0]+1,P[1]+17);
+  const ty=h-26,tH=h-wb-58,tx0=60,tx1=w-14,s0=L[0]/v,s1=L[2]/v,sp=(s1-s0)*.35,TX=s=>tx0+(tx1-tx0)*(s-(s0-sp))/(s1-s0+2*sp);
+  x.fillStyle=C.fg;x.textAlign='left';x.textBaseline='bottom';x.fillText('手機收到的時間',2,ty-tH-6);
+  x.strokeStyle=C.muted;x.lineWidth=1;x.beginPath();x.moveTo(tx0,ty+.5);x.lineTo(tx1,ty+.5);x.stroke();
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textBaseline='top';x.textAlign='right';x.fillText('時間 →',tx1,ty+4);
+  paths.forEach((pp,k)=>{const at=L[k]/v;if(tau<at)return;const bx=TX(at),bh=tH*gain[k];x.fillStyle=cols[k];x.fillRect(bx-4,ty-bh,8,bh);
+    x.fillStyle=C.fg;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='bottom';x.fillText(names[k],bx,ty-bh-2);});
+  if(tau>s0-sp&&tau<s1+sp){x.strokeStyle=C.fg;x.globalAlpha=.4;x.setLineDash([3,3]);x.beginPath();x.moveTo(TX(tau),ty-tH);x.lineTo(TX(tau),ty);x.stroke();x.setLineDash([]);x.globalAlpha=1;}
+  x.textAlign='left';}
+
 /* ---------- 迴圈 ---------- */
 const vis=new Map();const io=new IntersectionObserver(es=>es.forEach(e=>vis.set(e.target.id,e.isIntersecting)),{rootMargin:'80px'});
 document.querySelectorAll('canvas').forEach(c=>{vis.set(c.id,true);io.observe(c);});
 let prev=0;
 function frame(ms){const now=ms/1000,dt=Math.min(.05,prev?now-prev:0);prev=now;const t=reduce?1.2:now;
+  if(vis.get('cvB1'))drawB1(t);
+  if(vis.get('cvB2'))drawB2(t);
+  if(vis.get('cvB3'))drawB3(t);
+  if(vis.get('cvB4'))drawB4(t);
   if(vis.get('cvWave'))drawWave(t);
   if(vis.get('cvCh'))drawCh(reduce?0:t);
   if(vis.get('cvQam'))mcsText(drawQam(),ms);
