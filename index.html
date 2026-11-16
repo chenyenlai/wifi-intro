@@ -348,8 +348,13 @@ footer{font-size:13px;color:var(--muted)}
         <label class="ctl" for="ftP"><span>相位 φ：<b id="ftPo"></b></span><input type="range" id="ftP" min="0" max="315" step="45" value="0"></label>
         <label class="ctl" for="ftT"><span>長度 T：<b id="ftTo"></b></span><input type="range" id="ftT" min="2" max="14" value="5"></label>
       </div>
+      <ul class="legend">
+        <li><span class="sw" style="background:var(--b5)"></span>實部</li>
+        <li><span class="sw" style="background:var(--u4)"></span>虛部</li>
+        <li><span class="sw" style="background:transparent;border-bottom:2px dashed var(--accent);border-radius:0"></span>大小（不會變）</li>
+      </ul>
       <div class="cap" id="ftOut"></div>
-      <div class="cap">左邊是時域，右邊是頻域。第二排的 sinc 畫的是真正的值，有正有負；第三排畫的是大小（絕對值）。右下的小圓是山頂那個複數值：箭頭長度是大小，角度是相位。</div>
+      <div class="cap">左邊是時域，右邊是頻域。頻譜其實是複數，每個頻率有實部和虛部。改相位時，實部和虛部會互相交換份量，但「大小」（兩者平方和開根號）完全不變。右下的小圓就是山頂那一點的實部和虛部：箭頭長度是大小，角度是相位。</div>
     </div>
   </div>
 
@@ -1145,7 +1150,7 @@ function drawOrth(t){const[x,w,h]=fit($('#cvOrth'));const k=3,m=orM,L=6,R=w-6,W=
 let ft={a:.8,p:0,T:5};
 function ftUpdate(){ft.a=+$('#ftA').value/100;ft.p=+$('#ftP').value;ft.T=+$('#ftT').value;
   $('#ftAo').textContent=ft.a.toFixed(1);$('#ftPo').textContent=ft.p+'°';$('#ftTo').textContent=ft.T+' 圈';
-  $('#ftOut').innerHTML=`山頂的值：大小 <b class="mono">${(ft.a*ft.T/2).toFixed(1)}</b>（= a × T ÷ 2），相位 <b class="mono">${ft.p}°</b>。零點間距 1/T，T 是 ${ft.T} 圈時約為中心頻率的 ${(100/ft.T).toFixed(0)}%。改相位時，右邊的山完全不動，只有小圓裡的箭頭轉了。`;}
+  $('#ftOut').innerHTML=`山頂的值：大小 <b class="mono">${(ft.a*ft.T/2).toFixed(1)}</b>（= a × T ÷ 2），相位 <b class="mono">${ft.p}°</b>。零點間距 1/T，T 是 ${ft.T} 圈時約為中心頻率的 ${(100/ft.T).toFixed(0)}%。改相位時，綠色的實部和粉紅色的虛部會互相交換份量，但藍色虛線的大小完全不動，小圓裡的箭頭也跟著轉。`;}
 ['ftA','ftP','ftT'].forEach(id=>$('#'+id).addEventListener('input',ftUpdate));ftUpdate();
 function drawFt(){const[x,w,h]=fit($('#cvFt'));const gap=26,cw=(w-gap)/2,rh=(h-18)/3,R0=cw+gap,f0=1,span=cw<260?15:24,ph=ft.p*Math.PI/180;
   const sinc=u=>Math.abs(u)<1e-9?1:Math.sin(Math.PI*u)/(Math.PI*u);
@@ -1157,12 +1162,13 @@ function drawFt(){const[x,w,h]=fit($('#cvFt'));const gap=26,cw=(w-gap)/2,rh=(h-1
     x.beginPath();for(let px=0;px<=cw;px+=1){const y=cy-A*fn(tx(px));px?x.lineTo(px,y):x.moveTo(px,y);}x.strokeStyle=r===1?C.b24:C.accent;x.lineWidth=1.8;x.stroke();
     x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText(lt,2,y0);x.fillText(lf,R0+2,y0);
     const base=y0+rh-15,FH=rh-36,FS=cw/2,fx=v=>R0+cw/2+v*FS/1.2;
-    x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText(r===1?'0':'f₀',fx(0),base+2);
+    x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText(r===1?'0':'f₀',fx(0),r?base-FH*.35+4:base+2);
     if(r===0){x.strokeStyle=C.accent;x.lineWidth=3;x.beginPath();x.moveTo(fx(0),base);x.lineTo(fx(0),base-FH*ft.a);x.stroke();x.fillStyle=C.accent;x.beginPath();x.moveTo(fx(0),base-FH*ft.a-7);x.lineTo(fx(0)-5,base-FH*ft.a+1);x.lineTo(fx(0)+5,base-FH*ft.a+1);x.fill();}
-    else{const zero=r===1?base-FH*.35:base,sc=r===1?FH*.62:FH*ft.a;
-      if(r===1){x.strokeStyle=C.line;x.beginPath();x.moveTo(R0,zero+.5);x.lineTo(w,zero+.5);x.stroke();}
-      x.beginPath();for(let px=0;px<=cw;px+=1){const v=(px-cw/2)/FS*1.2,s2=sinc(v*ft.T),y=zero-sc*(r===1?s2:Math.abs(s2));px?x.lineTo(R0+px,y):x.moveTo(R0+px,y);}
-      x.strokeStyle=r===1?C.b24:C.accent;x.lineWidth=1.8;x.stroke();
+    else{const zero=base-FH*.35,sc=r===1?FH*.62:FH*.62*ft.a;
+      x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(R0,zero+.5);x.lineTo(w,zero+.5);x.stroke();
+      const curve=(fn,col,lw,dash)=>{x.beginPath();for(let px=0;px<=cw;px+=1){const v=(px-cw/2)/FS*1.2,y=zero-sc*fn(sinc(v*ft.T));px?x.lineTo(R0+px,y):x.moveTo(R0+px,y);}x.setLineDash(dash||[]);x.strokeStyle=col;x.lineWidth=lw;x.stroke();x.setLineDash([]);};
+      if(r===1)curve(v=>v,C.b24,1.8);
+      else{x.globalAlpha=.55;curve(v=>Math.abs(v),C.accent,1.4,[4,4]);x.globalAlpha=1;curve(v=>v*Math.sin(ph),C.u4,2.2);curve(v=>v*Math.cos(ph),C.b5,2.2);}
       x.fillStyle=C.panel;x.strokeStyle=C.fg;x.lineWidth=1.1;for(let k=1;k<12;k++)[-k,k].forEach(q=>{const v=q/ft.T;if(Math.abs(v)<1.18){x.beginPath();x.arc(fx(v),zero,2.6,0,7);x.fill();x.stroke();}});}
   });
   const pr=Math.min(24,rh*.22),pcx=w-pr-6,pcy=18+2*rh+pr+16;x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.arc(pcx,pcy,pr,0,7);x.moveTo(pcx-pr,pcy);x.lineTo(pcx+pr,pcy);x.moveTo(pcx,pcy-pr);x.lineTo(pcx,pcy+pr);x.stroke();
