@@ -302,6 +302,56 @@ footer{font-size:13px;color:var(--muted)}
   <p>Wi-Fi 不是用一個很寬的載波傳資料，而是把頻道切成很多窄的子載波，每個子載波各自傳一小部分資料，全部同時送出。</p>
   <p>下圖的每一條曲線是一個子載波的頻譜，也就是它的能量在頻率上的分布：中間一個高峰，兩旁有越來越小的波紋。</p>
   <p>傳統的分頻做法，載波之間要留空隙才不會互相干擾，很浪費頻譜。OFDM 讓子載波互相重疊、排得更密。只要間距選得剛好，每個子載波的高峰就會落在其他所有子載波的零點上。接收端只在高峰的位置讀取，讀到的就只有那一個子載波的資料，這就是「正交」。</p>
+  <div class="step">
+    <h3 class="sub"><span>1</span>頻譜是什麼</h3>
+    <p>頻譜是把一段訊號拆開，看它裡面含有哪些頻率、各有多少。橫軸是頻率，縱軸是那個頻率的份量。</p>
+    <p>一個從頭到尾都不變、永遠不停的波，頻譜就是一條很細的直線：只有一個頻率。但這種波沒有辦法傳資料，因為它永遠一模一樣。</p>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>2</span>波被切短，頻率就會散開</h3>
+    <p>子載波每過一個符號，就要換一次振幅和相位來帶下一筆資料。所以從頻率的角度看，每個子載波都是一小段、一小段的波，不是一直響下去的波。</p>
+    <p>這裡有一個物理規律：<b>波持續的時間越短，頻譜就散得越開</b>。就像很長的「嗡——」聽得出清楚的音高，很短的「嗶」就比較難說是哪個音，因為短促的聲音其實混了附近好幾個頻率。拖動下面的滑桿看看。</p>
+    <div class="panel">
+      <canvas id="cvSpread" style="height:300px" aria-label="上面是一段持續時間可調的波，下面是它的頻譜：時間越短，頻譜越寬"></canvas>
+      <label class="ctl" for="spN"><span>波持續多久：<b id="spNo"></b></span><input type="range" id="spN" min="2" max="40" value="6"></label>
+      <div class="cap" id="spOut"></div>
+      <div class="cap">上面是波（橫軸是時間），下面是它的頻譜（橫軸是頻率，正中間是這個子載波的中心頻率）。圓點是頻譜剛好等於 0 的位置。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>3</span>零點的位置是固定的</h3>
+    <p>上面的動畫裡，被切短的波，頻譜長成「中間一座山、兩邊越來越小的波紋」。這個形狀有一個很重要的特性：<b>零點剛好每隔「1 ÷ 符號長度」出現一次</b>。</p>
+    <p>Wi-Fi 5 以前，一個符號長 3.2 µs，所以零點每隔 1 ÷ 3.2 µs = 312.5 kHz 出現一次。Wi-Fi 就把相鄰子載波的間距也設成剛好 312.5 kHz。這樣一來，每個子載波的高峰，都正好落在其他所有子載波的零點上。</p>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>4</span>接收端怎麼只讀出一個子載波</h3>
+    <p>所有子載波是加在一起送出來的，接收端要把它們分開。做法是：在一個符號的時間裡，把收到的訊號和「想讀的那個子載波的頻率」相乘，再全部加起來。</p>
+    <ul class="pts">
+      <li><b>頻率相同：</b>兩個波一起上、一起下，相乘永遠是正的，加起來是一個大數字，這就是讀到的資料。</li>
+      <li><b>頻率不同、而且在一個符號裡剛好差整數圈：</b>相乘之後一半正、一半負，加起來剛好是 0，完全不會干擾。</li>
+      <li><b>差的不是整數圈：</b>正負沒辦法完全抵消，就會互相干擾。</li>
+    </ul>
+    <p>間距設成 1 ÷ 符號長度，就是為了讓每個子載波在一個符號裡，都剛好比隔壁多轉整數圈。這個「相乘再加總」的動作，接收端用一種叫快速傅立葉轉換（FFT）的計算，一次對所有子載波做完。</p>
+    <div class="panel">
+      <div class="row">
+        <span class="cap">另一個子載波</span>
+        <div class="seg" id="orSeg" role="group" aria-label="另一個子載波">
+          <button data-m="3" aria-pressed="false">同一個</button><button data-m="4" aria-pressed="true">隔壁（多 1 圈）</button><button data-m="5" aria-pressed="false">隔兩個（多 2 圈）</button><button data-m="3.3" aria-pressed="false">多 0.3 圈</button>
+        </div>
+      </div>
+      <canvas id="cvOrth" style="height:330px" aria-label="想讀的子載波、另一個子載波、兩者相乘的結果，以及一路加總的數值"></canvas>
+      <div class="cap" id="orOut"></div>
+      <div class="cap">畫面寬度是一個符號的時間。想讀的子載波在這段時間裡轉 3 圈。第三排是兩個波相乘：綠色是正的部分，紅色是負的部分。最下面的長條是從左到右一路加起來的結果。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>5</span>全部排在一起</h3>
+    <p>把上面幾件事放在一起，就是下面這張圖：每個子載波都是一座山，彼此重疊，但每一座的山頂都對準其他所有子載波的零點。</p>
+  </div>
   <div class="panel">
     <div class="row">
       <div class="seg" id="scSeg" role="group" aria-label="子載波間距">
@@ -1017,6 +1067,47 @@ function drawRoam(t,dt){const[x,w,h]=fit($('#cvRoam'));const pos=reduce?.5:.5-.4
   const n=ro.hist.length,bw=w/300;ro.hist.forEach((q,i)=>{const bx=w-(n-i)*bw;x.fillStyle=q===0?C.bad:C.b5;const hh=q===0?gh:gh*q;x.globalAlpha=q===0?.5:.85;x.fillRect(bx,gy-hh,bw+.3,hh);});x.globalAlpha=1;
   if(t-ro.at>.5||t<ro.at){ro.at=t;$('#roOut').innerHTML=ro.mode==='kvr'?`<b>有 k/v/r</b>：已經順利切換 ${ro.sw} 次，網速紀錄幾乎沒有中斷。`:`<b>沒有 k/v/r</b>：已經斷線 ${ro.drop} 次。紅色是斷線、重新搜尋的時間。`;}}
 
+/* ---------- OFDM：時間與頻譜 ---------- */
+let spN=6;
+function spUpdate(){spN=+$('#spN').value;$('#spNo').textContent=spN+' 圈';
+  $('#spOut').innerHTML=`波只持續 ${spN} 圈，頻譜中間那座山的寬度大約是中心頻率的 <b class="mono">${(200/spN).toFixed(1)}%</b>。時間拉長一倍，山就窄一半。實際的 Wi-Fi 在 2.4 GHz、一個符號 3.2 µs，大約轉 7,700 圈，所以山非常窄，但不是一條線。`;}
+$('#spN').addEventListener('input',spUpdate);spUpdate();
+function drawSpread(t){const[x,w,h]=fit($('#cvSpread'));const N=spN,topH=h*.4,mid=topH/2+8,A=topH/2-12,cyc=(w-20)/42,xc=w/2,half=N*cyc/2;
+  x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText('波（時間）',2,0);
+  x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(0,mid+.5);x.lineTo(w,mid+.5);x.stroke();
+  x.fillStyle=C.accent;x.globalAlpha=.08;x.fillRect(xc-half,mid-A-4,2*half,2*A+8);x.globalAlpha=1;
+  x.beginPath();for(let px=0;px<=w;px+=1){const on=Math.abs(px-xc)<=half,y=on?mid-A*Math.cos(2*Math.PI*(px-xc)/cyc-t*2):mid;px?x.lineTo(px,y):x.moveTo(px,y);}x.strokeStyle=C.accent;x.lineWidth=2;x.stroke();
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText('只響這一段',xc,1);
+  const base=h-22,SH=base-topH-28,F=v=>10+(w-20)*(v-.5),sinc=u=>Math.abs(u)<1e-9?1:Math.sin(Math.PI*u)/(Math.PI*u);
+  x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText('頻譜（頻率）',2,topH+6);
+  x.strokeStyle=C.muted;x.lineWidth=1;x.beginPath();x.moveTo(0,base+.5);x.lineTo(w,base+.5);x.stroke();
+  x.beginPath();x.moveTo(F(.5),base);for(let px=0;px<=w-20;px+=1){const f=.5+px/(w-20);x.lineTo(F(f),base-SH*Math.abs(sinc(N*(f-1))));}x.lineTo(F(1.5),base);x.closePath();
+  x.fillStyle=C.accent;x.globalAlpha=.15;x.fill();x.globalAlpha=1;x.strokeStyle=C.accent;x.lineWidth=2;x.stroke();
+  x.fillStyle=C.panel;x.strokeStyle=C.fg;x.lineWidth=1.3;for(let k=1;k<=6;k++)[1-k/N,1+k/N].forEach(f=>{if(f>.5&&f<1.5){x.beginPath();x.arc(F(f),base,3.2,0,7);x.fill();x.stroke();}});
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText('中心頻率',F(1),base+4);
+  const z0=F(1-1/N),z1=F(1+1/N),by=base-SH-8;if(z1-z0>40){x.strokeStyle=C.fg;x.lineWidth=1;x.beginPath();x.moveTo(z0,by);x.lineTo(z1,by);x.moveTo(z0,by-4);x.lineTo(z0,by+4);x.moveTo(z1,by-4);x.lineTo(z1,by+4);x.stroke();
+    x.fillStyle=C.fg;x.textBaseline='bottom';x.fillText('山的寬度',(z0+z1)/2,by-3);}
+  x.textAlign='left';}
+
+let orM=4;
+seg($('#orSeg'),b=>{orM=+b.dataset.m;});
+function drawOrth(t){const[x,w,h]=fit($('#cvOrth'));const k=3,m=orM,L=6,R=w-6,W=R-L,rh=(h-70)/3,p=reduce?1:Math.min(1,(t*.12)%1.35);
+  const ca=u=>Math.cos(2*Math.PI*k*u),cb=u=>Math.cos(2*Math.PI*m*u);
+  const rows=[['想讀的子載波（3 圈）',ca,C.accent],['另一個子載波（'+(m===3?'3':m)+' 圈）',cb,C.b24],['兩個相乘',u=>ca(u)*cb(u),null]];
+  rows.forEach(([lb,fn,col],r)=>{const y0=r*rh,cy=y0+rh/2+8,A=rh/2-12;x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(L,cy+.5);x.lineTo(R,cy+.5);x.stroke();
+    if(col===null){for(let px=0;px<=W*p;px+=1){const v=fn(px/W);x.fillStyle=v>=0?C.b5:C.bad;x.globalAlpha=.55;x.fillRect(L+px,v>=0?cy-A*v:cy,1.2,A*Math.abs(v));}x.globalAlpha=1;}
+    x.beginPath();for(let px=0;px<=W;px+=1){const y=cy-A*fn(px/W);px?x.lineTo(L+px,y):x.moveTo(L+px,y);}x.strokeStyle=col||C.fg;x.lineWidth=col?2:1.2;x.stroke();
+    x.fillStyle=C.panel;x.fillRect(0,y0,x.measureText(lb).width+40,15);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText(lb,2,y0+1);});
+  x.strokeStyle=C.fg;x.globalAlpha=.5;x.setLineDash([3,3]);x.beginPath();x.moveTo(L+W*p,0);x.lineTo(L+W*p,rh*3);x.stroke();x.setLineDash([]);x.globalAlpha=1;
+  const a=2*Math.PI*k,b=2*Math.PI*m,I=q=>a===b?q/2+Math.sin(2*a*q)/(4*a):Math.sin((a-b)*q)/(2*(a-b))+Math.sin((a+b)*q)/(2*(a+b)),S=I(p)/.5;
+  const by=h-40,bx=w/2,bw=(w/2-20);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='bottom';x.fillText('一路加起來',2,by-6);
+  x.strokeStyle=C.muted;x.lineWidth=1;x.strokeRect(bx-bw,by,2*bw,18);x.beginPath();x.moveTo(bx,by-4);x.lineTo(bx,by+22);x.stroke();
+  x.fillStyle=S>=0?C.b5:C.bad;const v=Math.max(-1,Math.min(1,S));x.fillRect(v>=0?bx:bx+bw*v,by+2,bw*Math.abs(v),14);
+  x.fillStyle=C.fg;x.font='600 13px '+FONT;x.textAlign='right';x.textBaseline='bottom';const Sd=Math.abs(S)<.005?0:S;x.fillText((Sd>0?'+':'')+Sd.toFixed(2),w-4,by-6);
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textBaseline='top';x.textAlign='center';x.fillText('0',bx,by+22);x.textAlign='left';
+  if(p>=1){const msg=m===k?'頻率相同：加起來是 1，這就是讀到的資料。':Number.isInteger(m)?'差整數圈：正負剛好抵消，加起來是 0，不會干擾。':'差的不是整數圈：正負抵消不完，留下 '+S.toFixed(2)+'，會干擾。';$('#orOut').innerHTML='<b>結果：</b>'+msg;}
+  else $('#orOut').textContent='從左到右一路相乘再加總中……';}
+
 /* ---------- 迴圈 ---------- */
 const vis=new Map();const io=new IntersectionObserver(es=>es.forEach(e=>vis.set(e.target.id,e.isIntersecting)),{rootMargin:'80px'});
 document.querySelectorAll('canvas').forEach(c=>{vis.set(c.id,true);io.observe(c);});
@@ -1040,6 +1131,8 @@ function frame(ms){const real=Math.min(.05,prev?ms/1000-prev:0);prev=ms/1000;con
   if(vis.get('cvWave'))drawWave(t);
   if(vis.get('cvCh'))drawCh(reduce?0:t);
   if(vis.get('cvQam'))mcsText(drawQam(),ms);
+  if(vis.get('cvSpread'))drawSpread(t);
+  if(vis.get('cvOrth'))drawOrth(t);
   if(vis.get('cvOfdm'))drawOfdm(t);
   if(vis.get('cvSig'))drawSig(t);
   if(vis.get('cvGi'))drawGi(t);
