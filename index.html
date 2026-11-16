@@ -85,6 +85,14 @@ dl.gloss{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260p
 dl.gloss div{min-width:0}
 dl.gloss dt{font-weight:600}
 dl.gloss dd{margin:0;font-size:14px;color:var(--muted);line-height:1.6}
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.feat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.feat .fh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.feat p{font-size:14px;line-height:1.65;color:var(--fg)}
+.feat p.why{color:var(--muted)}
+.imp{flex:none;font-size:11px;font-family:var(--mono);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.imp.k{border-color:var(--b5);color:var(--b5)}
+.tips ol{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;max-width:70ch}
 .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .facts div{border-left:3px solid var(--line);padding-left:10px;font-size:13px;color:var(--muted)}
 .facts b{display:block;font-family:var(--mono);font-size:20px;color:var(--fg);font-variant-numeric:tabular-nums}
@@ -114,7 +122,7 @@ footer{font-size:13px;color:var(--muted)}
   <p>Wi-Fi 的速度由幾件事決定：用哪個頻段、頻道有多寬、訊號多乾淨、每個子載波塞幾個 bit、用幾根天線，以及頻道怎麼分給多台裝置。下面照這個順序介紹，每個主題都有一個可以動手玩的動畫。</p>
   <p>如果你不熟無線電，先從<a href="#basics">基礎觀念</a>看起；遇到不懂的詞，可以查最後的<a href="#glossary">名詞小辭典</a>。</p>
   <nav aria-label="章節">
-    <a href="#basics">基礎觀念</a><a href="#band">頻段</a><a href="#channel">頻道與頻寬</a><a href="#signal">訊號與 SNR</a><a href="#ofdm">OFDM</a><a href="#gi">保護間隔</a><a href="#mcs">MCS</a><a href="#mimo">MIMO</a><a href="#bf">波束成形</a><a href="#csma">CSMA/CA</a><a href="#ofdma">OFDMA</a><a href="#mlo">MLO</a><a href="#real">實際網速</a><a href="#gen">世代比較</a><a href="#glossary">名詞小辭典</a>
+    <a href="#basics">基礎觀念</a><a href="#band">頻段</a><a href="#channel">頻道與頻寬</a><a href="#signal">訊號與 SNR</a><a href="#ofdm">OFDM</a><a href="#gi">保護間隔</a><a href="#mcs">MCS</a><a href="#mimo">MIMO</a><a href="#bf">波束成形</a><a href="#csma">CSMA/CA</a><a href="#ofdma">OFDMA</a><a href="#mlo">MLO</a><a href="#real">實際網速</a><a href="#gen">世代比較</a><a href="#chipspec">規格表</a><a href="#glossary">名詞小辭典</a>
   </nav>
 </header>
 
@@ -484,6 +492,112 @@ footer{font-size:13px;color:var(--muted)}
     </div>
     <div class="cap">理論最高速率是最大頻寬、最高 MCS、8 個空間串流的組合，一般手機只有 2 個串流。Wi-Fi 7 常見的「46 Gbps」是以 16 個串流計算的宣傳數字。</div>
   </div>
+</section>
+
+<section id="chipspec">
+  <h2><small>Reading a chip spec sheet</small>看懂 Wi-Fi 晶片規格表</h2>
+  <p>Wi-Fi 晶片或模組的規格表，通常會把功能分成六大類，每一類列一長串縮寫。這一節照這六類解釋每個功能是什麼。標了<span class="imp k">重要</span>的是比較常影響使用體驗、選晶片時要先看的。</p>
+  <div class="panel tips">
+    <h3>看規格表的五個重點</h3>
+    <ol>
+      <li><b>先看標準和頻段：</b>支援到 Wi-Fi 幾、有沒有 5 GHz，決定了大部分的能力。</li>
+      <li><b>安全至少要 WPA3 + PMF：</b>這是新產品認證的基本要求。</li>
+      <li><b>電池供電的裝置看 TWT：</b>它對電池續航影響最大。</li>
+      <li><b>同時有藍牙看共存：</b>Wi-Fi 和藍牙共用 2.4 GHz，沒處理好兩邊都會卡。</li>
+      <li><b>「支援」要看括號：</b>例如只支援 20 MHz、只能當被對準的一方（Beamformee）、只在當一般裝置時支援 OFDMA。同樣寫「支援」，能力可能差很多。</li>
+    </ol>
+  </div>
+  <div class="step">
+    <h3 class="sub"><span>1</span>標準與實體層</h3>
+    <p>晶片支援哪一代 Wi-Fi、能跑多快。</p>
+    <div class="feats">
+      <div class="feat"><div class="fh"><b>Wi-Fi 標準（802.11a/b/g/n/ac/ax）</b><span class="imp k">重要</span></div><p>字母代表不同世代：n 是 Wi-Fi 4，ac 是 Wi-Fi 5，ax 是 Wi-Fi 6，be 是 Wi-Fi 7。規格表會把支援的全部列出來，最後一個就是最新支援到哪一代。</p><p class="why"><b>為什麼重要：</b>決定能不能用到 OFDMA、TWT 這些新功能，也決定能不能連上只開新標準的路由器。</p></div>
+      <div class="feat"><div class="fh"><b>HE / VHT / HT 與 MCS 範圍</b><span class="imp k">重要</span></div><p>HE（High Efficiency）是 Wi-Fi 6 的調變表，VHT 是 Wi-Fi 5，HT 是 Wi-Fi 4。「HE MCS 0–9」表示 Wi-Fi 6 模式下最高支援到 MCS 9（256-QAM）；有的晶片在不同頻段支援的最高 MCS 不一樣。</p><p class="why"><b>為什麼重要：</b>最高 MCS 越高，訊號好的時候越快。見前面 <a href="#mcs">MCS</a>。</p></div>
+      <div class="feat"><div class="fh"><b>頻段（單頻 / 雙頻）</b><span class="imp k">重要</span></div><p>只支援 2.4 GHz 叫單頻；2.4 和 5 GHz 都支援叫雙頻；Wi-Fi 6E / 7 才有 6 GHz。</p><p class="why"><b>為什麼重要：</b>很多路由器會把 2.4 和 5 GHz 用同一個名稱，只支援 2.4 GHz 的裝置在 5 GHz 比較好的地方就用不到。</p></div>
+      <div class="feat"><div class="fh"><b>頻道頻寬</b><span class="imp k">重要</span></div><p>能用多寬的頻道，例如 20、40、80 MHz。物聯網用的小晶片常常只支援 20 MHz、1 個串流，因為省電、便宜，傳感測資料也夠用。</p><p class="why"><b>為什麼重要：</b>頻寬直接決定速度上限。見 <a href="#channel">頻道與頻寬</a>。</p></div>
+      <div class="feat"><div class="fh"><b>最大 PHY 速率</b><span class="imp">了解即可</span></div><p>用最高 MCS、最寬頻寬、最多串流算出來的理論連線速率，就是前面 MCS 計算機算的數字。</p><p class="why"><b>為什麼重要：</b>只是上限，實際傳輸量大約打五到七折。見 <a href="#real">實際網速</a>。</p></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>2</span>運作模式</h3>
+    <p>晶片可以扮演什麼角色。</p>
+    <div class="feats">
+      <div class="feat"><div class="fh"><b>STA 模式（Station）</b><span class="imp k">重要</span></div><p>當一般裝置，連到路由器上網。手機、筆電平常都是這個模式。</p></div>
+      <div class="feat"><div class="fh"><b>SoftAP 模式</b><span class="imp k">重要</span></div><p>晶片自己當成一個小型路由器，讓別的裝置連上來。手機開「個人熱點」就是 SoftAP。</p><p class="why"><b>為什麼重要：</b>智慧家電第一次設定時，常常先開一個 SoftAP 讓手機連進來輸入家裡的 Wi-Fi 密碼。</p></div>
+      <div class="feat"><div class="fh"><b>STA + AP 同時運作</b><span class="imp">了解即可</span></div><p>同時連著路由器，又自己開一個熱點，例如一邊上網一邊分享給其他裝置，或當訊號延伸器。</p></div>
+      <div class="feat"><div class="fh"><b>監聽模式（Monitor / Promiscuous）</b><span class="imp">了解即可</span></div><p>收下空中所有的 Wi-Fi 封包，不只是給自己的。主要用在除錯、分析網路或研究。</p></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>3</span>安全</h3>
+    <p>連線怎麼加密、怎麼確認對方是真的。</p>
+    <div class="feats">
+      <div class="feat"><div class="fh"><b>WPA3（Personal / Enterprise）</b><span class="imp k">重要</span></div><p>目前最新的 Wi-Fi 安全標準，取代用了很久的 WPA2。Personal 是家用的密碼模式，Enterprise 是公司用的帳號或憑證模式。</p><p class="why"><b>為什麼重要：</b>新的認證計畫要求支援 WPA3，6 GHz 頻段更是只能用 WPA3。</p></div>
+      <div class="feat"><div class="fh"><b>SAE（WPA3 的密碼交握）</b><span class="imp k">重要</span></div><p>WPA3 Personal 用來比對密碼的方法。WPA2 的做法被側錄後可以在電腦上不斷猜密碼；SAE 就算被錄下來也沒辦法離線猜。</p></div>
+      <div class="feat"><div class="fh"><b>SAE-H2E、SAE-PK</b><span class="imp">了解即可</span></div><p>H2E 是 SAE 更安全的密碼轉換方式，6 GHz 規定一定要用。PK 讓公共熱點可以證明自己是真的，防止有人架同名的假熱點。</p></div>
+      <div class="feat"><div class="fh"><b>PMF / MFP（管理封包保護）</b><span class="imp k">重要</span></div><p>Wi-Fi 有一些「管理用」的封包，例如通知斷線。以前這些封包沒有保護，有心人可以偽造一個斷線通知，把你踢下線。PMF 替這些封包加上保護。</p><p class="why"><b>為什麼重要：</b>WPA3 規定一定要開 PMF。</p></div>
+      <div class="feat"><div class="fh"><b>OWE（Enhanced Open）</b><span class="imp">了解即可</span></div><p>不用密碼的開放網路，例如咖啡店，以前完全沒加密，旁邊的人都看得到內容。OWE 讓不用密碼的網路也會自動加密。</p></div>
+      <div class="feat"><div class="fh"><b>企業認證（802.1X / EAP）</b><span class="imp">了解即可</span></div><p>公司、學校的 Wi-Fi 不是共用一組密碼，而是每個人用自己的帳號或憑證登入。EAP-TLS 用憑證，PEAP 用帳號密碼。</p></div>
+      <div class="feat"><div class="fh"><b>WPA3-Enterprise 192-bit</b><span class="imp">了解即可</span></div><p>企業模式的高強度版本，用更長的金鑰，給政府、金融等安全要求高的單位。</p></div>
+      <div class="feat"><div class="fh"><b>硬體加密加速（AES / CCMP / GCMP）</b><span class="imp k">重要</span></div><p>加密和解密由晶片裡專門的電路做，不佔用主處理器。CCMP、GCMP 是 Wi-Fi 用的加密方式，底層都是 AES。</p><p class="why"><b>為什麼重要：</b>沒有硬體加速，小型處理器開了加密就會變慢、變耗電。</p></div>
+      <div class="feat"><div class="fh"><b>WAPI</b><span class="imp">了解即可</span></div><p>中國自訂的無線安全標準，主要給要在中國市場銷售的產品。</p></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>4</span>進階功能</h3>
+    <p>省電、抗干擾、定位等加分的能力。</p>
+    <div class="feats">
+      <div class="feat"><div class="fh"><b>TWT（目標喚醒時間）</b><span class="imp k">重要</span></div><p>裝置和路由器約好下一次什麼時候醒來交換資料，中間可以完全睡覺。Wi-Fi 6 加入，下面有動畫。</p><p class="why"><b>為什麼重要：</b>電池供電的物聯網裝置最在意，可以讓電池撐好幾倍久。</p></div>
+      <div class="feat"><div class="fh"><b>與藍牙共存（Coexistence）</b><span class="imp k">重要</span></div><p>Wi-Fi 的 2.4 GHz 和藍牙用同一段頻率，常常還共用天線。兩個同時傳會互相干擾，所以晶片要協調輪流使用。規格表會寫用幾條線（例如 3 線、4 線）跟藍牙晶片溝通。</p><p class="why"><b>為什麼重要：</b>同時用藍牙耳機和 Wi-Fi 時，聲音會不會斷、網路會不會卡，就看這個做得好不好。</p></div>
+      <div class="feat"><div class="fh"><b>主機介面（SDIO / SPI / UART）</b><span class="imp">了解即可</span></div><p>Wi-Fi 晶片跟主處理器之間怎麼接線傳資料。SDIO 最快，SPI 中等，UART 最慢但最簡單。</p><p class="why"><b>為什麼重要：</b>決定實際能傳多快，介面太慢的話，Wi-Fi 再快也用不到。</p></div>
+      <div class="feat"><div class="fh"><b>波束成形（Beamformer / Beamformee）</b><span class="imp">了解即可</span></div><p>Beamformer 是發出波束、把能量對準別人的一方，通常是路由器；Beamformee 是被對準的一方，通常是手機或物聯網裝置。規格寫「支援 Beamformee」表示它能配合路由器的波束。</p><p class="why"><b>為什麼重要：</b>見前面 <a href="#bf">波束成形</a>。</p></div>
+      <div class="feat"><div class="fh"><b>BSS Color</b><span class="imp k">重要</span></div><p>附近鄰居的路由器如果用同一個頻道，以前裝置聽到別人的訊號就得乖乖等。Wi-Fi 6 讓每個網路帶一個「顏色」編號，裝置聽到別的顏色、而且訊號不強時，就可以不理它、照常傳送。</p><p class="why"><b>為什麼重要：</b>公寓、辦公室這種鄰居很多的環境，可以減少不必要的等待。見 <a href="#csma">CSMA/CA</a>。</p></div>
+      <div class="feat"><div class="fh"><b>OFDMA（上行 / 下行）</b><span class="imp k">重要</span></div><p>下行（DL）是路由器同時送資料給多台裝置，上行（UL）是多台裝置同時送給路由器。規格表常寫「支援（STA）」，意思是它當一般裝置時能配合路由器的排程。</p><p class="why"><b>為什麼重要：</b>見前面 <a href="#ofdma">OFDMA</a>。</p></div>
+      <div class="feat"><div class="fh"><b>CSI（頻道狀態資訊）</b><span class="imp">了解即可</span></div><p>每個子載波的振幅和相位被環境改變了多少的詳細資料。除了用來調整傳輸，也可以拿來偵測房間裡有沒有人在動，叫 Wi-Fi 感測。</p></div>
+      <div class="feat"><div class="fh"><b>天線分集（Antenna Diversity）</b><span class="imp">了解即可</span></div><p>裝置有兩根天線，但只有 1 個串流時，隨時挑訊號比較好的那根來用，可以減少訊號忽強忽弱。</p></div>
+      <div class="feat"><div class="fh"><b>DPP / Wi-Fi Easy Connect</b><span class="imp">了解即可</span></div><p>用手機掃裝置上的 QR code 就能讓它連上 Wi-Fi，不用手動輸入密碼。沒有螢幕的物聯網裝置特別需要。</p></div>
+      <div class="feat"><div class="fh"><b>Wi-Fi 定位（FTM）</b><span class="imp">了解即可</span></div><p>精準時間量測：裝置跟路由器來回傳訊號、量時間，算出距離，可以做到一兩公尺的室內定位。</p></div>
+    </div>
+    <div class="panel">
+      <h3>動畫：TWT 怎麼省電</h3>
+      <canvas id="cvTwt" style="height:170px" aria-label="兩排時間軸比較：沒有 TWT 時裝置頻繁醒來，有 TWT 時大部分時間在睡覺"></canvas>
+      <div class="cap">彩色是醒著（收發資料或聽路由器的廣播），灰色是睡覺。沒有 TWT 時，裝置要一直固定醒來聽路由器有沒有它的資料；有 TWT 時，雙方約好時間，中間可以一直睡。醒著的比例是示意值。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>5</span>漫遊</h3>
+    <p>家裡有好幾台 AP（例如 Mesh）時，怎麼換到最近的那台。</p>
+    <div class="feats">
+      <div class="feat"><div class="fh"><b>802.11k（鄰居報告）</b><span class="imp k">重要</span></div><p>AP 告訴裝置「附近還有哪些 AP、在哪個頻道」，裝置要換的時候不用每個頻道都掃一遍。</p></div>
+      <div class="feat"><div class="fh"><b>802.11v（建議換手）</b><span class="imp k">重要</span></div><p>AP 發現裝置訊號變差，或自己太忙，可以主動建議裝置換到別台 AP。</p></div>
+      <div class="feat"><div class="fh"><b>802.11r（快速切換）</b><span class="imp k">重要</span></div><p>事先把下一台 AP 的加密金鑰準備好，換 AP 時不用重新做完整的密碼驗證，中斷時間從幾百毫秒縮短到幾十毫秒。</p><p class="why"><b>為什麼重要：</b>視訊通話、語音通話走動時不會斷。三個通常一起出現，合稱 k/v/r，下面有動畫。</p></div>
+      <div class="feat"><div class="fh"><b>快速連線最佳化</b><span class="imp">了解即可</span></div><p>各家自己的加速方法，例如記住上次的頻道和設定，開機或醒來時更快連上。</p></div>
+    </div>
+    <div class="panel">
+      <h3>動畫：手機在兩台 AP 之間走動</h3>
+      <div class="seg" id="roSeg" role="group" aria-label="漫遊方式">
+        <button data-m="sticky" aria-pressed="false">沒有 k/v/r</button><button data-m="kvr" aria-pressed="true">有 k/v/r</button>
+      </div>
+      <canvas id="cvRoam" style="height:250px" aria-label="手機在兩台 AP 之間來回走動，線條表示目前連著哪一台；下方是網速紀錄"></canvas>
+      <div class="cap" id="roOut"></div>
+      <div class="cap">沒有 k/v/r 時，裝置常常死抓著原本的 AP 不放，直到訊號差到斷線才重新找，中間會斷一陣子。有 k/v/r 時，AP 會提早告訴它附近有更好的 AP，金鑰也先準備好，幾乎感覺不到切換。訊號強度是簡化的示意模型。</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3 class="sub"><span>6</span>Mesh 與點對點</h3>
+    <p>不經過路由器的連線方式。</p>
+    <div class="feats">
+      <div class="feat"><div class="fh"><b>Wi-Fi Mesh（EasyMesh）</b><span class="imp k">重要</span></div><p>好幾台 AP 彼此連成一張網，用同一個名稱涵蓋整個家。EasyMesh 是 Wi-Fi 聯盟的標準，不同品牌也能互相搭配。</p></div>
+      <div class="feat"><div class="fh"><b>Wi-Fi Direct（P2P）</b><span class="imp k">重要</span></div><p>兩台裝置不透過路由器直接連線。手機投影到電視、手機傳檔到印表機常用這個。</p></div>
+      <div class="feat"><div class="fh"><b>Wi-Fi Aware（NAN）</b><span class="imp">了解即可</span></div><p>附近的裝置可以互相發現、交換少量資料，不用先連到任何網路。例如附近裝置互傳檔案前，先找到對方。</p></div>
+    </div>
+  </div>
+
 </section>
 
 <section id="glossary">
@@ -861,11 +975,45 @@ function drawB4(t){const[x,w,h]=fit($('#cvB4'));const wt=16,wb=h*.56,R=[56,wt+(w
   if(tau>s0-sp&&tau<s1+sp){x.strokeStyle=C.fg;x.globalAlpha=.4;x.setLineDash([3,3]);x.beginPath();x.moveTo(TX(tau),ty-tH);x.lineTo(TX(tau),ty);x.stroke();x.setLineDash([]);x.globalAlpha=1;}
   x.textAlign='left';}
 
+/* ---------- TWT ---------- */
+function drawTwt(t){const[x,w,h]=fit($('#cvTwt'));const lw=w<480?78:96,rows=[['沒有 TWT',C.b24,(u)=>{const k=u%1;return k<.18;}],['有 TWT',C.b5,(u)=>{const k=u%6;return k<.3;}]],rh=(h-10)/2,sp=reduce?0:.8;
+  rows.forEach(([lb,col,awake],r)=>{const y=r*rh+10,bh=rh-26;x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText(lb,2,y);
+    let on=0,tot=0;for(let px=lw;px<w-70;px+=2){const u=(px-lw)/38+t*sp,a=awake(u);tot++;if(a)on++;x.fillStyle=a?col:C.line;x.globalAlpha=a?1:.7;x.fillRect(px,y+18,2,bh);}
+    x.globalAlpha=1;const pct=Math.round(on/tot*100);x.fillStyle=C.muted;x.font='11px '+FONT;x.fillText('醒著約 '+pct+'%',2,y+20);
+    const bx=w-60,bw=46,bh2=bh-4,lvl=r?0.86:0.32;x.strokeStyle=C.fg;x.lineWidth=1.5;x.strokeRect(bx,y+20,bw,bh2);x.fillRect(bx+bw,y+20+bh2/3,3,bh2/3);
+    x.fillStyle=r?C.b5:C.bad;x.fillRect(bx+3,y+23,(bw-6)*lvl,bh2-6);});}
+
+/* ---------- 漫遊 ---------- */
+let ro={mode:'kvr',ap:0,gap:0,hist:[],acc:0,lastT:0,sw:0,drop:0,at:0};
+function roSet(m){ro={mode:m,ap:0,gap:0,hist:[],acc:0,lastT:0,sw:0,drop:0,at:0};}
+seg($('#roSeg'),b=>roSet(b.dataset.m));
+const APX=[.12,.88],rssiAt=(px,a)=>-30-30*Math.log10(Math.abs(px-APX[a])*60+1);
+function drawRoam(t,dt){const[x,w,h]=fit($('#cvRoam'));const pos=reduce?.5:.5-.44*Math.cos(t*2*Math.PI/16),r=[rssiAt(pos,0),rssiAt(pos,1)];
+  if(!reduce){ro.acc+=dt;while(ro.acc>.1){ro.acc-=.1;
+    if(ro.gap>0){ro.gap-=.1;if(ro.gap<=0){ro.ap=r[0]>r[1]?0:1;ro.gap=0;}}
+    else{const o=1-ro.ap;if(ro.mode==='kvr'){if(r[ro.ap]<-62&&r[o]>r[ro.ap]+6){ro.ap=o;ro.gap=.1;ro.sw++;}}
+      else if(r[ro.ap]<-77){ro.gap=1.6;ro.drop++;}}
+    const q=ro.gap>0&&ro.mode==='sticky'?0:Math.max(.05,Math.min(1,(r[ro.ap]+82)/45));ro.hist.push(q);if(ro.hist.length>300)ro.hist.shift();}}
+  const top=h*.6,X=v=>24+(w-48)*v,ay=40;
+  APX.forEach((v,a)=>{x.fillStyle=C.fg;x.fillRect(X(v)-14,ay-10,28,14);x.fillRect(X(v)-1,ay-22,2,12);x.font='600 12px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillText('AP '+(a+1),X(v),ay+8);
+    x.fillStyle=C.muted;x.font='11px '+FONT;x.fillText(r[a].toFixed(0)+' dBm',X(v),ay+24);});
+  const py=top-50,px=X(pos);
+  if(ro.gap<=0||ro.mode==='kvr'){x.strokeStyle=ro.gap>0?C.muted:(r[ro.ap]<-70?C.b24:C.b5);x.lineWidth=3;x.beginPath();x.moveTo(X(APX[ro.ap]),ay+40);x.lineTo(px,py-12);x.stroke();}
+  x.strokeStyle=C.fg;x.lineWidth=2;x.fillStyle=C.panel;x.beginPath();x.rect(px-8,py-14,16,28);x.fill();x.stroke();
+  x.font='600 12px '+FONT;x.textAlign='center';x.textBaseline='top';x.fillStyle=ro.gap>0&&ro.mode==='sticky'?C.bad:C.fg;
+  x.fillText(ro.gap>0&&ro.mode==='sticky'?'斷線，重新搜尋中':'連著 AP '+(ro.ap+1),px,py+18);
+  const gy=h-14,gh=h-top-30;x.fillStyle=C.fg;x.textAlign='left';x.textBaseline='bottom';x.fillText('網速紀錄',2,gy-gh-4);
+  x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(0,gy+.5);x.lineTo(w,gy+.5);x.stroke();
+  const n=ro.hist.length,bw=w/300;ro.hist.forEach((q,i)=>{const bx=w-(n-i)*bw;x.fillStyle=q===0?C.bad:C.b5;const hh=q===0?gh:gh*q;x.globalAlpha=q===0?.5:.85;x.fillRect(bx,gy-hh,bw+.3,hh);});x.globalAlpha=1;
+  if(t-ro.at>.5||t<ro.at){ro.at=t;$('#roOut').innerHTML=ro.mode==='kvr'?`<b>有 k/v/r</b>：已經順利切換 ${ro.sw} 次，網速紀錄幾乎沒有中斷。`:`<b>沒有 k/v/r</b>：已經斷線 ${ro.drop} 次。紅色是斷線、重新搜尋的時間。`;}}
+
 /* ---------- 迴圈 ---------- */
 const vis=new Map();const io=new IntersectionObserver(es=>es.forEach(e=>vis.set(e.target.id,e.isIntersecting)),{rootMargin:'80px'});
 document.querySelectorAll('canvas').forEach(c=>{vis.set(c.id,true);io.observe(c);});
 let prev=0;
 function frame(ms){const now=ms/1000,dt=Math.min(.05,prev?now-prev:0);prev=now;const t=reduce?1.2:now;
+  if(vis.get('cvTwt'))drawTwt(t);
+  if(vis.get('cvRoam'))drawRoam(now,dt);
   if(vis.get('cvB1'))drawB1(t);
   if(vis.get('cvB2'))drawB2(t);
   if(vis.get('cvB3'))drawB3(t);
