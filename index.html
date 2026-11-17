@@ -367,6 +367,15 @@ footer{font-size:13px;color:var(--muted)}
       <li><b>頻率不同、而且在一個符號裡剛好差整數圈：</b>相乘之後一半正、一半負，加起來剛好是 0，完全不會干擾。</li>
       <li><b>差的不是整數圈：</b>正負沒辦法完全抵消，就會互相干擾。</li>
     </ul>
+    <p><b>「加起來」到底是加什麼？</b>接收端在一個符號時間裡取很多個時間點。每個時間點，把兩個波的值相乘，得到一個數字；最後把這些數字全部加起來。畫成圖，就是相乘那一排「綠色面積減掉紅色面積」。用 8 個時間點、轉 1 圈的子載波舉例：</p>
+    <div class="scroll"><table class="mono">
+      <tr><th>時間點</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>加起來</th></tr>
+      <tr><td>想讀的（1 圈）</td><td>1</td><td>0.7</td><td>0</td><td>−0.7</td><td>−1</td><td>−0.7</td><td>0</td><td>0.7</td><td></td></tr>
+      <tr><td>同一個 × 同一個</td><td>1</td><td>0.5</td><td>0</td><td>0.5</td><td>1</td><td>0.5</td><td>0</td><td>0.5</td><td><b>4</b></td></tr>
+      <tr><td>隔壁的（2 圈）</td><td>1</td><td>0</td><td>−1</td><td>0</td><td>1</td><td>0</td><td>−1</td><td>0</td><td></td></tr>
+      <tr><td>想讀的 × 隔壁的</td><td>1</td><td>0</td><td>0</td><td>0</td><td>−1</td><td>0</td><td>0</td><td>0</td><td><b>0</b></td></tr>
+    </table></div>
+    <p>同一個頻率相乘，每一格都是正的（負負得正），所以加起來是一個大數字。和隔壁的相乘，有正有負，剛好互相抵消成 0。收到的訊號是所有子載波加在一起，所以拿「想讀的」去乘、再加起來，只有它自己會留下一個大數字，其他全部變成 0。</p>
     <p>間距設成 1 ÷ 符號長度，就是為了讓每個子載波在一個符號裡，都剛好比隔壁多轉整數圈。這個「相乘再加總」的動作，接收端用一種叫快速傅立葉轉換（FFT）的計算，一次對所有子載波做完。</p>
     <div class="panel">
       <div class="row">
@@ -377,7 +386,7 @@ footer{font-size:13px;color:var(--muted)}
       </div>
       <canvas id="cvOrth" style="height:330px" aria-label="想讀的子載波、另一個子載波、兩者相乘的結果，以及一路加總的數值"></canvas>
       <div class="cap" id="orOut"></div>
-      <div class="cap">畫面寬度是一個符號的時間。想讀的子載波在這段時間裡轉 3 圈。第三排是兩個波相乘：綠色是正的部分，紅色是負的部分。最下面的長條是從左到右一路加起來的結果。</div>
+      <div class="cap">畫面寬度是一個符號的時間。想讀的子載波在這段時間裡轉 3 圈。第三排是兩個波相乘：綠色是正的部分，紅色是負的部分。最下面的長條是到目前為止「綠色面積 − 紅色面積」的結果，右邊的數字分別是綠色面積、紅色面積和相減的值。</div>
     </div>
   </div>
 
@@ -1152,13 +1161,14 @@ function drawOrth(t){const[x,w,h]=fit($('#cvOrth'));const k=3,m=orM,L=6,R=w-6,W=
     x.fillStyle=C.panel;x.fillRect(0,y0,x.measureText(lb).width+40,15);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText(lb,2,y0+1);});
   x.strokeStyle=C.fg;x.globalAlpha=.5;x.setLineDash([3,3]);x.beginPath();x.moveTo(L+W*p,0);x.lineTo(L+W*p,rh*3);x.stroke();x.setLineDash([]);x.globalAlpha=1;
   const a=2*Math.PI*k,b=2*Math.PI*m,I=q=>a===b?q/2+Math.sin(2*a*q)/(4*a):Math.sin((a-b)*q)/(2*(a-b))+Math.sin((a+b)*q)/(2*(a+b)),S=I(p)/.5;
-  const by=h-40,bx=w/2,bw=(w/2-20);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='bottom';x.fillText('一路加起來',2,by-6);
+  const by=h-(w<520?58:40),bx=w/2,bw=(w/2-20);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='bottom';x.fillText('加起來 = 綠色面積 − 紅色面積',2,by-6);
   x.strokeStyle=C.muted;x.lineWidth=1;x.strokeRect(bx-bw,by,2*bw,18);x.beginPath();x.moveTo(bx,by-4);x.lineTo(bx,by+22);x.stroke();
   x.fillStyle=S>=0?C.b5:C.bad;const v=Math.max(-1,Math.min(1,S));x.fillRect(v>=0?bx:bx+bw*v,by+2,bw*Math.abs(v),14);
-  x.fillStyle=C.fg;x.font='600 13px '+FONT;x.textAlign='right';x.textBaseline='bottom';const Sd=Math.abs(S)<.005?0:S;x.fillText((Sd>0?'+':'')+Sd.toFixed(2),w-4,by-6);
+  x.fillStyle=C.fg;x.font='600 13px '+FONT;x.textAlign='right';x.textBaseline='bottom';let G=0,Rd=0;const fp=u=>Math.cos(a*u)*Math.cos(b*u);for(let i=0;i<600;i++){const u=(i+.5)/600;if(u>p)break;const vv=fp(u)/600/.5;vv>0?G+=vv:Rd-=vv;}const Sd=Math.abs(S)<.005?0:S;
+  const ny=w<520?by+38:by-6;x.textAlign='right';x.fillStyle=C.b5;const t3=' = '+(Sd>0?'+':'')+Sd.toFixed(2),t2=' − '+Rd.toFixed(2),t1=G.toFixed(2);x.fillText(t1,w-4-x.measureText(t2+t3).width,ny);x.fillStyle=C.bad;x.fillText(t2,w-4-x.measureText(t3).width,ny);x.fillStyle=C.fg;x.fillText(t3,w-4,ny);
   x.fillStyle=C.muted;x.font='11px '+FONT;x.textBaseline='top';x.textAlign='center';x.fillText('0',bx,by+22);x.textAlign='left';
-  if(p>=1){const msg=m===k?'頻率相同：加起來是 1，這就是讀到的資料。':Number.isInteger(m)?'差整數圈：正負剛好抵消，加起來是 0，不會干擾。':'差的不是整數圈：正負抵消不完，留下 '+S.toFixed(2)+'，會干擾。';$('#orOut').innerHTML='<b>結果：</b>'+msg;}
-  else $('#orOut').textContent='從左到右一路相乘再加總中……';}
+  if(p>=1){const msg=m===k?'頻率相同：相乘全部是綠色（正的），沒有紅色可以抵消，加起來是 1，這就是讀到的資料。':Number.isInteger(m)?'差整數圈：綠色面積和紅色面積剛好一樣大，相減是 0，不會干擾。':'差的不是整數圈：綠色比紅色多，相減還剩 '+S.toFixed(2)+'，這一點點就會混進來，造成干擾。';$('#orOut').innerHTML='<b>結果：</b>'+msg;}
+  else $('#orOut').textContent='從左到右一路相乘，同時把綠色面積和紅色面積各自累計起來……';}
 
 /* ---------- OFDM：傅立葉轉換 ---------- */
 let ft={a:.8,p:0,T:5};
