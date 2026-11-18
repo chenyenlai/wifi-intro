@@ -74,7 +74,7 @@ a{color:var(--accent)}
 .step{display:flex;flex-direction:column;gap:12px}
 h3.sub{font-family:var(--display);font-size:20px;line-height:1.3;display:flex;align-items:center;gap:10px;text-wrap:balance}
 h3.sub span{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--panel);font-size:15px;display:grid;place-items:center}
-ul.pts{margin:0;padding-left:1.3em;max-width:65ch;display:flex;flex-direction:column;gap:4px}
+ul.pts,ol.pts{margin:0;padding-left:1.3em;max-width:65ch;display:flex;flex-direction:column;gap:4px}
 .formula{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .formula div{flex:1 1 150px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--muted)}
 .formula b{display:block;font-family:var(--mono);font-size:22px;color:var(--fg);font-variant-numeric:tabular-nums}
@@ -361,33 +361,35 @@ footer{font-size:13px;color:var(--muted)}
 
   <div class="step">
     <h3 class="sub"><span>5</span>接收端怎麼只讀出一個子載波</h3>
-    <p>所有子載波是加在一起送出來的，接收端要把它們分開。做法是：在一個符號的時間裡，把收到的訊號和「想讀的那個子載波的頻率」相乘，再全部加起來。</p>
+    <p><b>先看「擺幾下」。</b>每個子載波都是一條上下擺動的波，頻率越高，擺得越快。Wi-Fi 把子載波的頻率排得很整齊：在一個符號的時間裡，第 1 個剛好上下擺 1 下、第 2 個擺 2 下、第 3 個擺 3 下……<b>每一個都剛好比隔壁多擺 1 下</b>。</p>
+    <div class="panel">
+      <canvas id="cvSw" style="height:300px" aria-label="三個子載波在一個符號時間裡分別上下擺 1、2、3 下，最下面是三個加在一起、接收端真正收到的波"></canvas>
+      <div class="cap">框起來的寬度就是一個符號的時間。小數字是在數擺到最高點幾次：上去再下來算擺 1 下。最下面那條是三個加在一起的樣子，接收端收到的就是這種看不出原形的波。</div>
+    </div>
+    <p><b>接收端怎麼從混在一起的波裡，只挑出一個？</b>方法很像「對動作」：接收端手上拿著想讀的那條波當作<b>標準動作</b>，從頭到尾跟收到的訊號比一遍：</p>
     <ul class="pts">
-      <li><b>頻率相同：</b>兩個波一起上、一起下，相乘永遠是正的，加起來是一個大數字，這就是讀到的資料。</li>
-      <li><b>頻率不同、而且在一個符號裡剛好差整數圈：</b>相乘之後一半正、一半負，加起來剛好是 0，完全不會干擾。</li>
-      <li><b>差的不是整數圈：</b>正負沒辦法完全抵消，就會互相干擾。</li>
+      <li><b style="color:var(--b5)">兩個同時往上、或同時往下：</b>動作一致，加分（綠色）。</li>
+      <li><b style="color:var(--bad)">一個往上、一個往下：</b>動作相反，扣分（紅色）。</li>
+      <li>最後的<b>總分 = 綠色 − 紅色</b>，總分有多少，就代表收到的訊號裡「有多少這個子載波」。</li>
     </ul>
-    <p><b>「加起來」到底是加什麼？</b>接收端在一個符號時間裡取很多個時間點。每個時間點，把兩個波的值相乘，得到一個數字；最後把這些數字全部加起來。畫成圖，就是相乘那一排「綠色面積減掉紅色面積」。用 8 個時間點、轉 1 圈的子載波舉例：</p>
-    <div class="scroll"><table class="mono">
-      <tr><th>時間點</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>加起來</th></tr>
-      <tr><td>想讀的（1 圈）</td><td>1</td><td>0.7</td><td>0</td><td>−0.7</td><td>−1</td><td>−0.7</td><td>0</td><td>0.7</td><td></td></tr>
-      <tr><td>同一個 × 同一個</td><td>1</td><td>0.5</td><td>0</td><td>0.5</td><td>1</td><td>0.5</td><td>0</td><td>0.5</td><td><b>4</b></td></tr>
-      <tr><td>隔壁的（2 圈）</td><td>1</td><td>0</td><td>−1</td><td>0</td><td>1</td><td>0</td><td>−1</td><td>0</td><td></td></tr>
-      <tr><td>想讀的 × 隔壁的</td><td>1</td><td>0</td><td>0</td><td>0</td><td>−1</td><td>0</td><td>0</td><td>0</td><td><b>0</b></td></tr>
-    </table></div>
-    <p>同一個頻率相乘，每一格都是正的（負負得正），所以加起來是一個大數字。和隔壁的相乘，有正有負，剛好互相抵消成 0。收到的訊號是所有子載波加在一起，所以拿「想讀的」去乘、再加起來，只有它自己會留下一個大數字，其他全部變成 0。</p>
-    <p>間距設成 1 ÷ 符號長度，就是為了讓每個子載波在一個符號裡，都剛好比隔壁多轉整數圈。這個「相乘再加總」的動作，接收端用一種叫快速傅立葉轉換（FFT）的計算，一次對所有子載波做完。</p>
+    <p>下面的動畫裡，標準動作是「擺 2 下」的子載波。按上面的按鈕，換成不同的訊號來比，看看總分會怎樣：</p>
     <div class="panel">
       <div class="row">
-        <span class="cap">另一個子載波</span>
-        <div class="seg" id="orSeg" role="group" aria-label="另一個子載波">
-          <button data-m="3" aria-pressed="false">同一個</button><button data-m="4" aria-pressed="true">隔壁（多 1 圈）</button><button data-m="5" aria-pressed="false">隔兩個（多 2 圈）</button><button data-m="3.3" aria-pressed="false">多 0.3 圈</button>
+        <div class="seg" id="mtSeg" role="group" aria-label="拿標準動作去比哪一種訊號">
+          <button data-m="self" aria-pressed="true">跟自己比</button><button data-m="3" aria-pressed="false">跟擺 3 下的比</button><button data-m="4" aria-pressed="false">跟擺 4 下的比</button><button data-m="mix" aria-pressed="false">跟混在一起的比</button><button data-m="off" aria-pressed="false">沒排整齊的</button>
         </div>
       </div>
-      <canvas id="cvOrth" style="height:330px" aria-label="想讀的子載波、另一個子載波、兩者相乘的結果，以及一路加總的數值"></canvas>
-      <div class="cap" id="orOut"></div>
-      <div class="cap">畫面寬度是一個符號的時間。想讀的子載波在這段時間裡轉 3 圈。第三排是兩個波相乘：綠色是正的部分，紅色是負的部分。最下面的長條是到目前為止「綠色面積 − 紅色面積」的結果，右邊的數字分別是綠色面積、紅色面積和相減的值。</div>
+      <canvas id="cvMatch" style="height:340px" aria-label="上面是標準動作，中間是要比的訊號，背景綠色代表方向一致、紅色代表方向相反，下面是累計的總分"></canvas>
+      <div class="cap" id="mtOut"></div>
     </div>
+    <p><b>重點整理：</b></p>
+    <ul class="pts">
+      <li>跟自己比：處處一致，滿分。</li>
+      <li>跟多擺 1 下、2 下的比：一半時間一致、一半時間相反，綠色和紅色剛好一樣多，總分 0，等於<b>完全看不到它</b>。</li>
+      <li>所以跟混在一起的波比，其他子載波全部變成 0，只剩想讀的那一個，分數跟「只跟自己比」一模一樣。</li>
+      <li>如果擺動的次數沒有排整齊（例如多擺 0.4 下），綠紅抵消不乾淨，就會剩一點分數混進來，這就是干擾。Wi-Fi 把子載波間距設成「1 ÷ 符號長度」，就是為了讓每個子載波剛好多擺整數下。</li>
+    </ul>
+    <p>接收端每個子載波都用自己的標準動作比一次，就把全部分開了。實際上是用一種叫 FFT 的快速算法，一次把所有子載波比完。</p>
   </div>
 
   <div class="step">
@@ -1150,25 +1152,45 @@ function drawSpread(t){const[x,w,h]=fit($('#cvSpread'));const N=spN,topH=h*.4,mi
     x.fillStyle=C.fg;x.textBaseline='bottom';x.fillText('山的寬度',(z0+z1)/2,by-3);}
   x.textAlign='left';}
 
-let orM=4;
-seg($('#orSeg'),b=>{orM=+b.dataset.m;});
-function drawOrth(t){const[x,w,h]=fit($('#cvOrth'));const k=3,m=orM,L=6,R=w-6,W=R-L,rh=(h-70)/3,p=reduce?1:Math.min(1,(t*.12)%1.35);
-  const ca=u=>Math.cos(2*Math.PI*k*u),cb=u=>Math.cos(2*Math.PI*m*u);
-  const rows=[['想讀的子載波（3 圈）',ca,C.accent],['另一個子載波（'+(m===3?'3':m)+' 圈）',cb,C.b24],['兩個相乘',u=>ca(u)*cb(u),null]];
-  rows.forEach(([lb,fn,col],r)=>{const y0=r*rh,cy=y0+rh/2+8,A=rh/2-12;x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(L,cy+.5);x.lineTo(R,cy+.5);x.stroke();
-    if(col===null){for(let px=0;px<=W*p;px+=1){const v=fn(px/W);x.fillStyle=v>=0?C.b5:C.bad;x.globalAlpha=.55;x.fillRect(L+px,v>=0?cy-A*v:cy,1.2,A*Math.abs(v));}x.globalAlpha=1;}
-    x.beginPath();for(let px=0;px<=W;px+=1){const y=cy-A*fn(px/W);px?x.lineTo(L+px,y):x.moveTo(L+px,y);}x.strokeStyle=col||C.fg;x.lineWidth=col?2:1.2;x.stroke();
-    x.fillStyle=C.panel;x.fillRect(0,y0,x.measureText(lb).width+40,15);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText(lb,2,y0+1);});
-  x.strokeStyle=C.fg;x.globalAlpha=.5;x.setLineDash([3,3]);x.beginPath();x.moveTo(L+W*p,0);x.lineTo(L+W*p,rh*3);x.stroke();x.setLineDash([]);x.globalAlpha=1;
-  const a=2*Math.PI*k,b=2*Math.PI*m,I=q=>a===b?q/2+Math.sin(2*a*q)/(4*a):Math.sin((a-b)*q)/(2*(a-b))+Math.sin((a+b)*q)/(2*(a+b)),S=I(p)/.5;
-  const by=h-(w<520?58:40),bx=w/2,bw=(w/2-20);x.fillStyle=C.fg;x.font='600 12px '+FONT;x.textAlign='left';x.textBaseline='bottom';x.fillText('加起來 = 綠色面積 − 紅色面積',2,by-6);
-  x.strokeStyle=C.muted;x.lineWidth=1;x.strokeRect(bx-bw,by,2*bw,18);x.beginPath();x.moveTo(bx,by-4);x.lineTo(bx,by+22);x.stroke();
-  x.fillStyle=S>=0?C.b5:C.bad;const v=Math.max(-1,Math.min(1,S));x.fillRect(v>=0?bx:bx+bw*v,by+2,bw*Math.abs(v),14);
-  x.fillStyle=C.fg;x.font='600 13px '+FONT;x.textAlign='right';x.textBaseline='bottom';let G=0,Rd=0;const fp=u=>Math.cos(a*u)*Math.cos(b*u);for(let i=0;i<600;i++){const u=(i+.5)/600;if(u>p)break;const vv=fp(u)/600/.5;vv>0?G+=vv:Rd-=vv;}const Sd=Math.abs(S)<.005?0:S;
-  const ny=w<520?by+38:by-6;x.textAlign='right';x.fillStyle=C.b5;const t3=' = '+(Sd>0?'+':'')+Sd.toFixed(2),t2=' − '+Rd.toFixed(2),t1=G.toFixed(2);x.fillText(t1,w-4-x.measureText(t2+t3).width,ny);x.fillStyle=C.bad;x.fillText(t2,w-4-x.measureText(t3).width,ny);x.fillStyle=C.fg;x.fillText(t3,w-4,ny);
-  x.fillStyle=C.muted;x.font='11px '+FONT;x.textBaseline='top';x.textAlign='center';x.fillText('0',bx,by+22);x.textAlign='left';
-  if(p>=1){const msg=m===k?'頻率相同：相乘全部是綠色（正的），沒有紅色可以抵消，加起來是 1，這就是讀到的資料。':Number.isInteger(m)?'差整數圈：綠色面積和紅色面積剛好一樣大，相減是 0，不會干擾。':'差的不是整數圈：綠色比紅色多，相減還剩 '+S.toFixed(2)+'，這一點點就會混進來，造成干擾。';$('#orOut').innerHTML='<b>結果：</b>'+msg;}
-  else $('#orOut').textContent='從左到右一路相乘，同時把綠色面積和紅色面積各自累計起來……';}
+/* ---------- 擺幾下 ---------- */
+function drawSw(){const[x,w,h]=fit($('#cvSw'));const L=10,R=w-10,W=R-L,top=22,rh=(h-top)/4;
+  x.strokeStyle=C.muted;x.lineWidth=1;x.setLineDash([4,3]);x.strokeRect(L,top-6,W,h-top+2);x.setLineDash([]);
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='center';x.textBaseline='bottom';x.fillText('←　一個符號的時間　→',L+W/2,top-8);
+  const rows=[[1,C.accent,'擺 1 下'],[2,C.b6,'擺 2 下'],[3,C.b24,'擺 3 下'],[0,C.fg,'三個加在一起（收到的）']];
+  rows.forEach(([m,col,lb],r)=>{const cy=top+r*rh+rh/2+6,A=rh/2-12,fn=m?u=>Math.sin(2*Math.PI*m*u):u=>(Math.sin(2*Math.PI*u)+Math.sin(4*Math.PI*u)+Math.sin(6*Math.PI*u))/2.2;
+    x.strokeStyle=C.line;x.beginPath();x.moveTo(L,cy+.5);x.lineTo(R,cy+.5);x.stroke();
+    x.beginPath();for(let px=0;px<=W;px++){const y=cy-A*fn(px/W);px?x.lineTo(L+px,y):x.moveTo(L+px,y);}x.strokeStyle=col;x.lineWidth=2;x.stroke();
+    if(m){x.fillStyle=col;x.font='600 12px '+FONT;x.textAlign='center';x.textBaseline='bottom';
+      for(let j=0;j<m;j++){const px=L+W*(j+.25)/m;x.beginPath();x.arc(px,cy-A,3.5,0,7);x.fill();x.fillText(String(j+1),px,cy-A-4);}}
+    x.fillStyle=C.panel;x.font='600 12px '+FONT;const tw=x.measureText(lb).width;x.fillRect(R-tw-6,cy-A-14,tw+6,15);x.fillStyle=col;x.textAlign='right';x.textBaseline='top';x.fillText(lb,R-2,cy-A-13);});
+  x.textAlign='left';}
+
+/* ---------- 對動作 ---------- */
+let mtM='self',mtT0=0,mtNow=0;const MK=2;
+seg($('#mtSeg'),b=>{mtM=b.dataset.m;mtT0=mtNow;});
+const MT={self:[u=>Math.sin(2*Math.PI*2*u),'跟自己比（擺 2 下）',1],
+  3:[u=>Math.sin(2*Math.PI*3*u),'擺 3 下的',1],4:[u=>Math.sin(2*Math.PI*4*u),'擺 4 下的',1],
+  mix:[u=>Math.sin(2*Math.PI*2*u)+Math.sin(2*Math.PI*3*u)+Math.sin(2*Math.PI*4*u),'混在一起的（擺 2、3、4 下相加）',3],
+  off:[u=>Math.sin(2*Math.PI*2.4*u),'擺 2.4 下的（沒排整齊）',1]};
+function drawMatch(t){mtNow=t;const[x,w,h]=fit($('#cvMatch'));const[fn,lb,sc]=MT[mtM],ref=u=>Math.sin(2*Math.PI*MK*u);
+  const L=8,R=w-8,W=R-L,rh=(h-96)/3,p=reduce?1:Math.min(1,((t-mtT0)*.13)%1.4);
+  // background bands on rows 1-2
+  for(let px=0;px<W*p;px++){const v=ref(px/W)*fn(px/W);x.fillStyle=v>=0?C.b5:C.bad;x.globalAlpha=.16;x.fillRect(L+px,0,1.2,rh*2);}x.globalAlpha=1;
+  const rows=[['標準動作（想讀的，擺 2 下）',ref,C.accent,1],['要比的：'+lb,fn,C.b24,sc],['比對：綠＝方向一致加分，紅＝相反扣分',u=>ref(u)*fn(u),null,sc]];
+  rows.forEach(([t1,f,col,s],r)=>{const y0=r*rh,cy=y0+rh/2+8,A=rh/2-12;x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(L,cy+.5);x.lineTo(R,cy+.5);x.stroke();
+    if(col===null){for(let px=0;px<=W*p;px++){const v=f(px/W)/s;x.fillStyle=v>=0?C.b5:C.bad;x.globalAlpha=.7;x.fillRect(L+px,v>=0?cy-A*v:cy,1.2,A*Math.abs(v));}x.globalAlpha=1;}
+    else{x.beginPath();for(let px=0;px<=W;px++){const y=cy-A*f(px/W)/s;px?x.lineTo(L+px,y):x.moveTo(L+px,y);}x.strokeStyle=col;x.lineWidth=2;x.stroke();}
+    x.font='600 12px '+FONT;const tw=x.measureText(t1).width;x.fillStyle=C.panel;x.globalAlpha=.85;x.fillRect(0,y0,tw+6,16);x.globalAlpha=1;x.fillStyle=C.fg;x.textAlign='left';x.textBaseline='top';x.fillText(t1,2,y0+1);});
+  x.strokeStyle=C.fg;x.globalAlpha=.6;x.setLineDash([3,3]);x.beginPath();x.moveTo(L+W*p,0);x.lineTo(L+W*p,rh*3);x.stroke();x.setLineDash([]);x.globalAlpha=1;
+  let G=0,Rd=0;const N=800;for(let i=0;i<N;i++){const u=(i+.5)/N;if(u>p)break;const v=ref(u)*fn(u)/N/.5*100;v>0?G+=v:Rd-=v;}const S=G-Rd,Sd=Math.abs(S)<.5?0:S;
+  const by=h-58,bx=L+W/2,bw=W/2;x.fillStyle=C.fg;x.font='600 13px '+FONT;x.textAlign='left';x.textBaseline='bottom';x.fillText('總分（跟自己比的滿分是 100）',2,by-6);
+  x.strokeStyle=C.muted;x.lineWidth=1;x.strokeRect(bx-bw,by,2*bw,20);x.beginPath();x.moveTo(bx,by-4);x.lineTo(bx,by+24);x.stroke();
+  const v=Math.max(-1,Math.min(1,Sd/100));x.fillStyle=v>=0?C.b5:C.bad;x.fillRect(v>=0?bx:bx+bw*v,by+2,bw*Math.abs(v),16);
+  x.font='600 14px '+FONT;x.textBaseline='top';x.textAlign='left';const y2=by+28;let cx=2;
+  [[`綠 ${Math.round(G)}`,C.b5],['  −  ',C.fg],[`紅 ${Math.round(Rd)}`,C.bad],['  =  ',C.fg],[`總分 ${Math.round(Sd)}`,C.fg]].forEach(([s,c])=>{x.fillStyle=c;x.fillText(s,cx,y2);cx+=x.measureText(s).width;});
+  if(p>=1){const msg={self:'每一刻都一致，全部是綠色，拿到滿分 100。',3:'一半時間一致、一半時間相反，綠色和紅色一樣多，總分 0。擺 3 下的子載波對讀擺 2 下的完全沒有影響。',4:'同樣綠紅一樣多，總分 0，完全看不到它。',mix:'收到的波雖然看不出原形，比完還是 100 分，跟「只跟自己比」一模一樣：擺 3 下、擺 4 下的都被抵消成 0，只讀到擺 2 下的那一個。',off:'擺的次數沒排整齊，綠色比紅色多，還剩 '+Math.round(Sd)+' 分。這些分數其實不屬於想讀的子載波，混進來就是干擾。'}[mtM];$('#mtOut').innerHTML='<b>結果：</b>'+msg;}
+  else $('#mtOut').textContent='從左到右一路比對，綠色加分、紅色扣分……';
+  x.textAlign='left';}
 
 /* ---------- OFDM：傅立葉轉換 ---------- */
 let ft={a:.8,p:0,T:5};
@@ -1260,7 +1282,8 @@ function frame(ms){const real=Math.min(.05,prev?ms/1000-prev:0);prev=ms/1000;con
   if(vis.get('cvQam'))mcsText(drawQam(),ms);
   if(vis.get('cvSpread'))drawSpread(t);
   if(vis.get('cvFt'))drawFt();
-  if(vis.get('cvOrth'))drawOrth(t);
+  if(vis.get('cvSw'))drawSw();
+  if(vis.get('cvMatch'))drawMatch(t);
   if(vis.get('cvPh'))drawPh(t);
   if(vis.get('cvOfdm'))drawOfdm(t);
   if(vis.get('cvSig'))drawSig(t);
