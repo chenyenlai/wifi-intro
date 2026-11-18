@@ -74,6 +74,9 @@ a{color:var(--accent)}
 .step{display:flex;flex-direction:column;gap:12px}
 h3.sub{font-family:var(--display);font-size:20px;line-height:1.3;display:flex;align-items:center;gap:10px;text-wrap:balance}
 h3.sub span{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--panel);font-size:15px;display:grid;place-items:center}
+details.adv{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+details.adv>summary{cursor:pointer;font-weight:600;color:var(--accent)}
+details.adv[open]>summary{margin-bottom:6px}
 ul.pts,ol.pts{margin:0;padding-left:1.3em;max-width:65ch;display:flex;flex-direction:column;gap:4px}
 .formula{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .formula div{flex:1 1 150px;min-width:0;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--muted)}
@@ -361,6 +364,21 @@ footer{font-size:13px;color:var(--muted)}
 
   <div class="step">
     <h3 class="sub"><span>5</span>接收端怎麼只讀出一個子載波</h3>
+    <p>所有子載波是混在一起送出來的。接收端的做法很直接：<b>把收到的一段訊號轉成頻譜</b>（用一種叫 FFT 的快速算法），然後<b>在每個子載波的頻率上讀一個值</b>。讀到的大小（和角度），就是那個子載波這次帶的資料。</p>
+    <p>但每個子載波在頻譜上不是一根細線，而是一座有寬度的山，山和山疊在一起。那在某個子載波的頻率上讀值，不會混到隔壁的山嗎？</p>
+    <p>不會，因為上一段說的：<b>每座山的山頂，都對準其他所有山的零點</b>。在 A 的頻率上，其他山剛好都是 0，讀到的只有 A 自己。</p>
+    <div class="panel">
+      <div class="row">
+        <div class="seg" id="rdSeg" role="group" aria-label="子載波間距">
+          <button data-s="1" aria-pressed="true">間距排好（Wi-Fi 的做法）</button><button data-s="0.7" aria-pressed="false">間距太窄</button>
+        </div>
+      </div>
+      <canvas id="cvRead" style="height:300px" aria-label="五個子載波在頻譜上各是一座山，彼此重疊；虛線標出每個子載波的頻率，圓點是在那裡讀到的值"></canvas>
+      <div class="cap" id="rdOut"></div>
+      <div class="cap">五種顏色的細線是五個子載波各自的山，高度代表它帶的資料。黑色粗線是全部加起來，也就是接收端轉出來的頻譜。虛線是每個子載波的頻率，圓點是在那裡讀到的值。底下的表格比較「讀到的」和「真正送的」。</div>
+    </div>
+    <details class="adv">
+      <summary>進階：頻譜到底是怎麼算出來的？（用「對動作」來看）</summary>
     <p><b>先看「擺幾下」。</b>每個子載波都是一條上下擺動的波，頻率越高，擺得越快。Wi-Fi 把子載波的頻率排得很整齊：在一個符號的時間裡，第 1 個剛好上下擺 1 下、第 2 個擺 2 下、第 3 個擺 3 下……<b>每一個都剛好比隔壁多擺 1 下</b>。</p>
     <div class="panel">
       <canvas id="cvSw" style="height:300px" aria-label="三個子載波在一個符號時間裡分別上下擺 1、2、3 下，最下面是三個加在一起、接收端真正收到的波"></canvas>
@@ -389,7 +407,8 @@ footer{font-size:13px;color:var(--muted)}
       <li>所以跟混在一起的波比，其他子載波全部變成 0，只剩想讀的那一個，分數跟「只跟自己比」一模一樣。</li>
       <li>如果擺動的次數沒有排整齊（例如多擺 0.4 下），綠紅抵消不乾淨，就會剩一點分數混進來，這就是干擾。Wi-Fi 把子載波間距設成「1 ÷ 符號長度」，就是為了讓每個子載波剛好多擺整數下。</li>
     </ul>
-    <p>接收端每個子載波都用自己的標準動作比一次，就把全部分開了。實際上是用一種叫 FFT 的快速算法，一次把所有子載波比完。</p>
+    <p>這個「對動作」其實就是在算頻譜：要知道某個頻率在訊號裡有多少，就拿那個頻率的波去比，總分就是頻譜在那個頻率的值。FFT 只是一次把所有頻率比完的快速算法。所以「在頻譜上讀值」和「用標準動作去比」是同一件事，零點對齊和「比出 0 分」也是同一件事，只是一個從頻譜看、一個從時間看。</p>
+    </details>
   </div>
 
   <div class="step">
@@ -1152,6 +1171,27 @@ function drawSpread(t){const[x,w,h]=fit($('#cvSpread'));const N=spN,topH=h*.4,mi
     x.fillStyle=C.fg;x.textBaseline='bottom';x.fillText('山的寬度',(z0+z1)/2,by-3);}
   x.textAlign='left';}
 
+/* ---------- 在頻譜上讀值 ---------- */
+let rdS=1;seg($('#rdSeg'),b=>{rdS=+b.dataset.s;});
+const RDA=[.6,1,.4,.85,.5];
+function drawRead(t){const[x,w,h]=fit($('#cvRead'));const n=RDA.length,L=10,R=w-10,W=R-L,base=h*.62,tb=base+22;let A=base-28;
+  const fmin=-2.2,fmax=n-1+2.2,F=f=>L+(f-fmin)/(fmax-fmin)*W,sinc=v=>Math.abs(v)<1e-9?1:Math.sin(Math.PI*v)/(Math.PI*v);
+  const fc=i=>(i-(n-1)/2)*rdS+(n-1)/2;const cols=[C.accent,C.b6,C.b24,C.u4,C.b5];
+  x.strokeStyle=C.line;x.lineWidth=1;x.beginPath();x.moveTo(L,base+.5);x.lineTo(R,base+.5);x.stroke();
+  const tot=f=>RDA.reduce((s,a,i)=>s+a*sinc(f-fc(i)),0);
+  let pk=1;for(let k=0;k<=200;k++){pk=Math.max(pk,Math.abs(tot(fmin+k/200*(fmax-fmin))));}A/=pk;
+  RDA.forEach((a,i)=>{x.beginPath();for(let px=0;px<=W;px++){const f=fmin+px/W*(fmax-fmin),y=base-A*a*sinc(f-fc(i));px?x.lineTo(L+px,y):x.moveTo(L+px,y);}x.strokeStyle=cols[i];x.lineWidth=1.3;x.globalAlpha=.75;x.stroke();x.globalAlpha=1;});
+  x.beginPath();for(let px=0;px<=W;px++){const f=fmin+px/W*(fmax-fmin),y=base-A*tot(f);px?x.lineTo(L+px,y):x.moveTo(L+px,y);}x.strokeStyle=C.fg;x.lineWidth=2.4;x.stroke();
+  const cw=W/n;x.font='600 12px '+FONT;x.textAlign='center';let ok=true;
+  RDA.forEach((a,i)=>{const X=F(fc(i)),v=tot(fc(i)),good=Math.abs(v-a)<.02;if(!good)ok=false;
+    x.strokeStyle=cols[i];x.setLineDash([3,3]);x.beginPath();x.moveTo(X,8);x.lineTo(X,base);x.stroke();x.setLineDash([]);
+    x.fillStyle=cols[i];x.beginPath();x.arc(X,base-A*v,5,0,7);x.fill();
+    const tx=L+cw*(i+.5);x.textBaseline='top';x.fillStyle=cols[i];x.fillText('第'+(i+1)+'個',tx,tb);
+    x.fillStyle=C.muted;x.font='11px '+FONT;x.fillText('送 '+a.toFixed(2),tx,tb+18);
+    x.fillStyle=good?C.fg:C.bad;x.font='600 12px '+FONT;x.fillText('讀 '+v.toFixed(2),tx,tb+34);});
+  x.fillStyle=C.muted;x.font='11px '+FONT;x.textAlign='left';x.textBaseline='top';x.fillText('頻率 →',R-44,base+4);
+  $('#rdOut').innerHTML='<b>結果：</b>'+(ok?'每條虛線上，只有自己那座山在山頂，其他的山都剛好穿過 0。讀到的和送的完全一樣。':'山擠在一起，山頂沒有對準別人的零點。每條虛線上都混到了隔壁的山，讀到的值（紅字）跟送的不一樣，這就是干擾。');
+  x.textAlign='left';}
 /* ---------- 擺幾下 ---------- */
 function drawSw(){const[x,w,h]=fit($('#cvSw'));const L=10,R=w-10,W=R-L,top=22,rh=(h-top)/4;
   x.strokeStyle=C.muted;x.lineWidth=1;x.setLineDash([4,3]);x.strokeRect(L,top-6,W,h-top+2);x.setLineDash([]);
@@ -1282,6 +1322,7 @@ function frame(ms){const real=Math.min(.05,prev?ms/1000-prev:0);prev=ms/1000;con
   if(vis.get('cvQam'))mcsText(drawQam(),ms);
   if(vis.get('cvSpread'))drawSpread(t);
   if(vis.get('cvFt'))drawFt();
+  if(vis.get('cvRead'))drawRead(t);
   if(vis.get('cvSw'))drawSw();
   if(vis.get('cvMatch'))drawMatch(t);
   if(vis.get('cvPh'))drawPh(t);
